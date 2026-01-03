@@ -22,6 +22,7 @@ namespace MCUUpdater
       string filePath = null;
       bool doUpdate = false;
       bool eraseUserData = false;
+      int connectionTimeout = 60;
 
       // Parse arguments
       for (int i = 0; i < args.Length; i++)
@@ -35,6 +36,13 @@ namespace MCUUpdater
             if (!int.TryParse(args[++i], out baudRate))
             {
               Console.WriteLine("Invalid baud rate.");
+              return;
+            }
+            break;
+          case "--timeout":
+            if (!int.TryParse(args[++i], out connectionTimeout))
+            {
+              Console.WriteLine("Invalid timeout.");
               return;
             }
             break;
@@ -95,7 +103,7 @@ namespace MCUUpdater
         {
           var lines = File.ReadAllLines(filePath);
           Console.WriteLine("Starting firmware update...");
-          result = bootloader.Update(lines);
+          result = bootloader.Update(lines, connectionTimeout);
           Console.WriteLine();
         }
         else if (eraseUserData)
@@ -172,13 +180,14 @@ namespace MCUUpdater
     private static void ShowUsage()
     {
       Console.WriteLine("Usage:");
-      Console.WriteLine("  MCUUpdater.exe --update --port COMx --baud 115200 --file firmware.xbin");
+      Console.WriteLine("  MCUUpdater.exe --update --port COMx --baud 115200 --timeout 60 --file firmware.xbin");
       Console.WriteLine("  MCUUpdater.exe --erase-user --port COMx --baud 115200");
       Console.WriteLine();
       Console.WriteLine("  --update        Perform firmware update");
       Console.WriteLine("  --erase-user    Erase user data flash area");
       Console.WriteLine("  --port          Serial COM port");
       Console.WriteLine("  --baud          Baud rate (e.g., 115200)");
+      Console.WriteLine("  --timeout       Connection timeout");
       Console.WriteLine("  --file          Path to firmware update file");
     }
   }

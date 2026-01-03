@@ -66,18 +66,19 @@ namespace MCUUpdater
       /// Обновить прошивку
       /// </summary>
       /// <param name="data">данные обновления</param>
-      public BootloaderWorkflowResult Update(string[] data)
+      public BootloaderWorkflowResult Update(string[] data, int connectionTimeout)
       {
+        int connectionIterations = connectionTimeout * 2;
         int i;
-        for (i = 0; i < 10; i++)
+        for (i = 0; i < connectionIterations; i++)
         {
           if (Device.BootloaderActivate() == BootloaderProtocolActionResult.OK)
             break;
 
-          System.Threading.Thread.Sleep(100);
+          System.Threading.Thread.Sleep(500);
         }
 
-        if (i == 10)
+        if (i == connectionIterations)
           return BootloaderWorkflowResult.ConnectionError;
 
         BootloaderProtocolActionResult result;
