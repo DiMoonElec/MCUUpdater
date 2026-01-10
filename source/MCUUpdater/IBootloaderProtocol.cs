@@ -10,6 +10,7 @@ namespace MCUUpdater
   {
     OK,
     Error,
+    IncompatibleDeviceError,
     ConnectionLost,
     InternalError,
   }
@@ -34,9 +35,17 @@ namespace MCUUpdater
     BootloaderProtocolActionResult BootloaderActivate();
 
     /// <summary>
-    /// Начало процесса обновления прошивки. Данная команда стирает старую прошивку
+    /// Начало процесса обновления прошивки для протокола обмена версии 0. 
+    /// Данная команда стирает старую прошивку
     /// </summary>
     BootloaderProtocolActionResult BootloaderBegin();
+
+    /// <summary>
+    /// Начало процесса обновления прошивки для протокола обмена версии 1. 
+    /// Данная команда стирает старую прошивку
+    /// </summary>
+    /// <param name="header">Header Chunk</param>
+    BootloaderProtocolActionResult BootloaderBegin_V1(string header);
 
     /// <summary>
     /// Выполняет загрузку чанка и его расшивровку в ОЗУ ПЛК

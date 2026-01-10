@@ -101,9 +101,10 @@ namespace MCUUpdater
 
         if (doUpdate)
         {
-          var lines = File.ReadAllLines(filePath);
+          var update_file = FirmwareUpdateParser.Parse(filePath);
+          Console.WriteLine($"File loaded: Protocol Version {update_file.ProtocolVersion}, Format Version {update_file.FormatVersion}");
           Console.WriteLine("Starting firmware update...");
-          result = bootloader.Update(lines, connectionTimeout);
+          result = bootloader.Update(update_file, connectionTimeout);
           Console.WriteLine();
         }
         else if (eraseUserData)
@@ -132,6 +133,9 @@ namespace MCUUpdater
             break;
           case BootloaderWorkflowResult.UpdateError:
             Console.WriteLine("Firmware update failed.");
+            break;
+          case BootloaderWorkflowResult.IncompatibleDeviceError:
+            Console.WriteLine("The firmware is not compatible with this device.");
             break;
           default:
             Console.WriteLine("Unknown error.");

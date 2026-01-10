@@ -16,6 +16,7 @@ namespace MCUUpdater
       OK = 0,
       ConnectionError,
       ErasingError,
+      IncompatibleDeviceError,
       UpdateError,
     }
 
@@ -62,11 +63,101 @@ namespace MCUUpdater
         }
       }
 
-      /// <summary>
-      /// Обновить прошивку
-      /// </summary>
-      /// <param name="data">данные обновления</param>
-      public BootloaderWorkflowResult Update(string[] data, int connectionTimeout)
+      public BootloaderWorkflowResult Update(FirmwareUpdateFile updateFile, int connectionTimeout)
+      {
+        if (updateFile.ProtocolVersion == 0)
+          return UpdateProtocolVersion0(updateFile, connectionTimeout);
+        else if (updateFile.ProtocolVersion == 1)
+          return UpdateProtocolVersion1(updateFile, connectionTimeout);
+        else
+          throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
+
+      }
+
+      private BootloaderWorkflowResult UpdateProtocolVersion1(FirmwareUpdateFile updateFile, int connectionTimeout)
+      {
+        int connectionIterations = connectionTimeout * 2;
+        int i;
+        for (i = 0; i < connectionIterations; i++)
+        {
+          if (Device.BootloaderActivate() == BootloaderProtocolActionResult.OK)
+            break;
+
+          System.Threading.Thread.Sleep(500);
+        }
+
+        if (i == connectionIterations)
+          return BootloaderWorkflowResult.ConnectionError;
+
+        BootloaderProtocolActionResult result;
+
+        //Очистка flash-памяти
+        if (EraseBegin != null)
+          EraseBegin();
+
+        result = Device.BootloaderBegin_V1(updateFile.HeaderChunkBase64.Trim());
+
+        if (EraseEnd != null)
+          EraseEnd();
+
+        if (result == BootloaderProtocolActionResult.IncompatibleDeviceError)
+          return BootloaderWorkflowResult.IncompatibleDeviceError;
+        if (result != BootloaderProtocolActionResult.OK)
+          return BootloaderWorkflowResult.ErasingError;
+
+        //Отправка обновления
+        if (UploadBegin != null)
+          UploadBegin();
+
+        var dataChunks = updateFile.DataChunksBase64;
+
+        for (int b = 0; b < dataChunks.Count; b++)
+        {
+          string u = dataChunks[b].Trim();
+
+          if (u != "")
+          {
+            result = Device.BootloaderSend(u);
+            if (result != BootloaderProtocolActionResult.OK)
+              return BootloaderWorkflowResult.UpdateError;
+
+            result = Device.BootloaderWrite();
+            if (result != BootloaderProtocolActionResult.OK)
+              return BootloaderWorkflowResult.UpdateError;
+          }
+
+          if (UploadProgress != null)
+          {
+            int progress = (b * 100) / dataChunks.Count;
+            UploadProgress(progress);
+          }
+        }
+
+        if (UploadEnd != null)
+          UploadEnd();
+
+        //Завершаем процесс обновления
+        result = Device.BootloaderEnd();
+        if (result != BootloaderProtocolActionResult.OK)
+          return BootloaderWorkflowResult.ConnectionError;
+
+        //Проверяем CRC прошивки
+        bool crcOK;
+        result = Device.BootloaderCheckApplicationCRC(out crcOK);
+        if (result != BootloaderProtocolActionResult.OK)
+          return BootloaderWorkflowResult.ConnectionError;
+        if (crcOK == false)
+          return BootloaderWorkflowResult.UpdateError;
+
+        //Запускаем прошивку
+        result = Device.BootloaderApplicationRun();
+        if (result == BootloaderProtocolActionResult.OK)
+          return BootloaderWorkflowResult.OK;
+        else
+          return BootloaderWorkflowResult.UpdateError;
+      }
+
+      private BootloaderWorkflowResult UpdateProtocolVersion0(FirmwareUpdateFile updateFile, int connectionTimeout)
       {
         int connectionIterations = connectionTimeout * 2;
         int i;
@@ -99,9 +190,11 @@ namespace MCUUpdater
         if (UploadBegin != null)
           UploadBegin();
 
-        for (int b = 0; b < data.Length; b++)
+        var dataChunks = updateFile.DataChunksBase64;
+
+        for (int b = 0; b < dataChunks.Count; b++)
         {
-          string u = data[b].Trim();
+          string u = dataChunks[b].Trim();
 
           if (u != "")
           {
@@ -116,7 +209,7 @@ namespace MCUUpdater
 
           if (UploadProgress != null)
           {
-            int progress = (b * 100) / data.Length;
+            int progress = (b * 100) / dataChunks.Count;
             UploadProgress(progress);
           }
         }
