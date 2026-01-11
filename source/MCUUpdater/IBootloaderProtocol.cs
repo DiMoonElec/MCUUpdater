@@ -38,7 +38,7 @@ namespace MCUUpdater
     /// Начало процесса обновления прошивки для протокола обмена версии 0. 
     /// Данная команда стирает старую прошивку
     /// </summary>
-    BootloaderProtocolActionResult BootloaderBegin();
+    BootloaderProtocolActionResult BootloaderBegin_V0();
 
     /// <summary>
     /// Начало процесса обновления прошивки для протокола обмена версии 1. 

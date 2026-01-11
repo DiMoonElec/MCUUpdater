@@ -181,7 +181,7 @@ namespace MCUUpdater
         if (EraseBegin != null)
           EraseBegin();
 
-        result = Device.BootloaderBegin();
+        result = Device.BootloaderBegin_V0();
 
         if (EraseEnd != null)
           EraseEnd();

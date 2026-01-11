@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
+using DiMoon.Protocols;
 using MCUUpdater.Connectors;
 
 namespace MCUUpdater
@@ -17,13 +17,17 @@ namespace MCUUpdater
     const byte CMD_BOOTLOADER_SET_PERMANENT_DATA = 0x77;
     const byte CMD_BOOTLOADER_ERASE_USER_DATA = 0x78;
 
+    const int ResponseTimeout = 500;
 
-    static AutoResetEvent respEvent = new AutoResetEvent(false);
-    static byte[] resp;
     protected IDeviceConnector DeviceConnector;
 
     public event BootloaderErasureProgressDelegate BootloaderMemoryErasureProgress;
     public event BootloaderErasureProgressDelegate BootloaderUserDataErasureProgress;
+
+    private readonly BinexLibReceiver binexLibReceiver = new BinexLibReceiver(512);
+    private readonly BinexLibTransmitter binexLibTransmitter = new BinexLibTransmitter();
+
+    private PacketQueue respQueue = new PacketQueue(128);
 
     public BootloaderProtocol(IDeviceConnector deviceConnector)
     {
@@ -46,10 +50,10 @@ namespace MCUUpdater
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var respResult = WaitResp(500);
+      var resp = respQueue.Pop(ResponseTimeout);
 
       //Проверяем ошибку таймаута ожедания ответа
-      if (respResult == false)
+      if (resp == null)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -62,10 +66,9 @@ namespace MCUUpdater
         return BootloaderProtocolActionResult.Error;
 
       return BootloaderProtocolActionResult.OK;
-
     }
 
-    public BootloaderProtocolActionResult BootloaderBegin()
+    public BootloaderProtocolActionResult BootloaderBegin_V0()
     {
       //Отправляем запрос
       var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_BEGIN });
@@ -77,10 +80,10 @@ namespace MCUUpdater
       for (; ; )
       {
         //Ждем ответ
-        var respResult = WaitResp(500);
+        var resp = respQueue.Pop(ResponseTimeout);
 
         //Проверяем ошибку таймаута ожедания ответа
-        if (respResult == false)
+        if (resp == null)
           return BootloaderProtocolActionResult.ConnectionLost;
 
         //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -125,10 +128,10 @@ namespace MCUUpdater
       for (; ; )
       {
         //Ждем ответ
-        var respResult = WaitResp(500);
+        var resp = respQueue.Pop(ResponseTimeout);
 
         //Проверяем ошибку таймаута ожедания ответа
-        if (respResult == false)
+        if (resp == null)
           return BootloaderProtocolActionResult.ConnectionLost;
 
         //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -160,6 +163,7 @@ namespace MCUUpdater
         }
       }
     }
+
     public BootloaderProtocolActionResult BootloaderSend(string frame)
     {
       //Формируем запрос
@@ -175,10 +179,10 @@ namespace MCUUpdater
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var respResult = WaitResp(500);
+      var resp = respQueue.Pop(ResponseTimeout);
 
       //Проверяем ошибку таймаута ожедания ответа
-      if (respResult == false)
+      if (resp == null)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -203,10 +207,10 @@ namespace MCUUpdater
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var respResult = WaitResp(500);
+      var resp = respQueue.Pop(ResponseTimeout);
 
       //Проверяем ошибку таймаута ожедания ответа
-      if (respResult == false)
+      if (resp == null)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -230,10 +234,10 @@ namespace MCUUpdater
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var respResult = WaitResp(500);
+      var resp = respQueue.Pop(ResponseTimeout);
 
       //Проверяем ошибку таймаута ожедания ответа
-      if (respResult == false)
+      if (resp == null)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -260,10 +264,10 @@ namespace MCUUpdater
       }
 
       //Ждем ответ
-      var respResult = WaitResp(500);
+      var resp = respQueue.Pop(ResponseTimeout);
 
       //Проверяем ошибку таймаута ожедания ответа
-      if (respResult == false)
+      if (resp == null)
       {
         Result = false;
         return BootloaderProtocolActionResult.ConnectionLost;
@@ -303,10 +307,10 @@ namespace MCUUpdater
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var respResult = WaitResp(500);
+      var resp = respQueue.Pop(ResponseTimeout);
 
       //Проверяем ошибку таймаута ожедания ответа
-      if (respResult == false)
+      if (resp == null)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -332,10 +336,10 @@ namespace MCUUpdater
       for (; ; )
       {
         //Ждем ответ
-        var respResult = WaitResp(500);
+        var resp = respQueue.Pop(ResponseTimeout);
 
         //Проверяем ошибку таймаута ожедания ответа
-        if (respResult == false)
+        if (resp == null)
           return BootloaderProtocolActionResult.ConnectionLost;
 
         //Если тут вернули не то, то ожидаем, то выходим с ошибкой
@@ -370,24 +374,27 @@ namespace MCUUpdater
 
     #region Вспомогательные методы
 
-    private void DeviceConnector_DataReceived(object sender, byte[] e)
+    private void DeviceConnector_DataReceived(object sender, byte[] data)
     {
-      resp = e;
-      respEvent.Set();
+      foreach (var d in data)
+      {
+        if (binexLibReceiver.Input(d))
+        {
+          var pack = binexLibReceiver.GetReceiveData();
+          respQueue.Push(pack);
+        }
+      }
     }
 
-    bool WaitResp(int timeout)
-    {
-      return respEvent.WaitOne(timeout);
-    }
-
-    bool SendReq(byte[] req)
+    private bool SendReq(byte[] req)
     {
       if (DeviceConnector.IsConnected() == false)
         return false;
 
-      respEvent.Reset();
-      DeviceConnector.Write(req);
+      respQueue.Clear();
+
+      var pack = binexLibTransmitter.BuildPackage(req);
+      DeviceConnector.Write(pack);
       return true;
     }
 

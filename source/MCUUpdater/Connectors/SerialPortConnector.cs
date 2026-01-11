@@ -2,15 +2,12 @@
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
-using DiMoon.Protocols;
 
 namespace MCUUpdater.Connectors
 {
   internal class SerialPortConnector : IDeviceConnector
   {
     private readonly SerialPort serialPort = new SerialPort();
-    private readonly BinexLibReceiver binexLibReceiver = new BinexLibReceiver(512);
-    private readonly BinexLibTransmitter binexLibTransmitter = new BinexLibTransmitter();
 
     public string PortName { get; private set; }
     public int BaudRate { get; private set; }
@@ -109,8 +106,7 @@ namespace MCUUpdater.Connectors
 
     public void Write(byte[] data)
     {
-      var pack = binexLibTransmitter.BuildPackage(data);
-      serialPort.Write(pack, 0, pack.Length);
+      serialPort.Write(data, 0, data.Length);
     }
 
     // Событие для передачи данных
@@ -120,33 +116,19 @@ namespace MCUUpdater.Connectors
 
     private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
     {
-      //List<byte> dbgBuffer = new List<byte>();
-
       try
       {
-        while (serialPort.BytesToRead > 0)
-        {
-          int byteRead = serialPort.ReadByte();
+        var bytes = serialPort.BytesToRead;
+        var buffer = new byte[bytes];
+        serialPort.Read(buffer, 0, bytes);
 
-          //dbgBuffer.Add((byte)byteRead);
-
-          if (binexLibReceiver.Input((byte)byteRead))
-          {
-            var receivedData = binexLibReceiver.GetReceiveData();
-
-            // Вызов события с переданными данными
-            DataReceived?.Invoke(this, receivedData);
-          }
-        }
+        DataReceived?.Invoke(this, buffer);
       }
       catch (Exception ex)
       {
         // Логирование или обработка ошибок при чтении
         Console.WriteLine($"[Error]: {ex.Message}");
       }
-
-      //var str = BitConverter.ToString(dbgBuffer.ToArray(), 0, dbgBuffer.Count);
-      //Log.Information($"(SerialConnector) Data Received: {str}");
     }
 
     private void RaiseConnectionError(string message)
