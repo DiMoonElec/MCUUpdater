@@ -87,10 +87,10 @@ namespace MCUUpdater
       {
         Console.WriteLine($"Connecting to {port} at {baudRate} baud...");
         SerialPortConnector serialPortConnector = new SerialPortConnector();
-        serialPortConnector.Open(port, baudRate);
+        serialPortConnector.SetConnectionParams(port, baudRate);
 
         BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(serialPortConnector);
-        BootloaderWorkflow bootloader = new BootloaderWorkflow(bootloaderProtocol);
+        BootloaderWorkflow bootloader = new BootloaderWorkflow(bootloaderProtocol, serialPortConnector);
 
         bootloader.EraseProgress += Bootloader_EraseProgress;
         bootloader.UserDataEraseProgress += Bootloader_UserDataEraseProgress;

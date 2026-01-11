@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MCUUpdater.Connectors;
 
 namespace MCUUpdater
 {
@@ -23,6 +24,7 @@ namespace MCUUpdater
     public class BootloaderWorkflow
     {
       IBootloaderProtocol Device;
+      IDeviceConnector Connector;
 
       public event BootloaderEventDelegate EraseBegin;
       public event BootloaderEventDelegate EraseEnd;
@@ -38,9 +40,10 @@ namespace MCUUpdater
       public event BootloaderProgressDelegate UploadProgress;
 
 
-      public BootloaderWorkflow(IBootloaderProtocol dev)
+      public BootloaderWorkflow(IBootloaderProtocol dev, IDeviceConnector connector)
       {
         Device = dev;
+        Connector = connector;
         dev.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
         dev.BootloaderUserDataErasureProgress += bootloaderUserDataErasureProgress;
       }
@@ -80,7 +83,7 @@ namespace MCUUpdater
         int i;
         for (i = 0; i < connectionIterations; i++)
         {
-          if (Device.BootloaderActivate() == BootloaderProtocolActionResult.OK)
+          if (InitializeConnection())
             break;
 
           System.Threading.Thread.Sleep(500);
@@ -163,7 +166,7 @@ namespace MCUUpdater
         int i;
         for (i = 0; i < connectionIterations; i++)
         {
-          if (Device.BootloaderActivate() == BootloaderProtocolActionResult.OK)
+          if (InitializeConnection())
             break;
 
           System.Threading.Thread.Sleep(500);
@@ -253,6 +256,22 @@ namespace MCUUpdater
 
         return BootloaderWorkflowResult.ErasingError;
       }
+
+      private bool InitializeConnection()
+      {
+        if (Connector.Connect() == false)
+          return false;
+
+        if (Device.BootloaderActivate() != BootloaderProtocolActionResult.OK)
+        {
+          Connector.Disconnect();
+          return false;
+        }
+
+        return true;
+      }
+
+
     }
   }
 }

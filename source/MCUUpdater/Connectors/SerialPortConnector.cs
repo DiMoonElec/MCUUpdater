@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using DiMoon.Protocols;
 
 namespace MCUUpdater.Connectors
@@ -9,6 +11,9 @@ namespace MCUUpdater.Connectors
     private readonly SerialPort serialPort = new SerialPort();
     private readonly BinexLibReceiver binexLibReceiver = new BinexLibReceiver(512);
     private readonly BinexLibTransmitter binexLibTransmitter = new BinexLibTransmitter();
+
+    public string PortName { get; private set; }
+    public int BaudRate { get; private set; }
 
     public SerialPortConnector()
     {
@@ -20,20 +25,72 @@ namespace MCUUpdater.Connectors
       serialPort.WriteBufferSize = 1024;
     }
 
+    public bool Connect()
+    {
+      var availablePorts = SerialPort.GetPortNames();
+
+      if (!availablePorts.Contains(PortName))
+      {
+        RaiseConnectionError($"Порт {PortName} не найден");
+        return false;
+      }
+
+      try
+      {
+        if (serialPort.IsOpen)
+          serialPort.Close();
+
+        serialPort.PortName = PortName;
+        serialPort.BaudRate = BaudRate;
+
+        serialPort.DataReceived -= SerialPort_DataReceived;
+        serialPort.DataReceived += SerialPort_DataReceived;
+
+        serialPort.Open();
+
+        if (!serialPort.IsOpen)
+        {
+          RaiseConnectionError($"Не удалось открыть порт {PortName}");
+          return false;
+        }
+
+        return true;
+      }
+      catch (UnauthorizedAccessException)
+      {
+        RaiseConnectionError($"Порт {PortName} занят другим приложением");
+      }
+      catch (IOException)
+      {
+        RaiseConnectionError($"Ошибка ввода-вывода на порту {PortName}");
+      }
+      catch (ArgumentException)
+      {
+        RaiseConnectionError("Некорректные параметры порта");
+      }
+      catch (Exception ex)
+      {
+        RaiseConnectionError($"Ошибка открытия порта: {ex.Message}");
+      }
+
+      return false;
+    }
+
+    public void Disconnect()
+    {
+      if (serialPort.IsOpen)
+        serialPort.Close();
+    }
+
     public static string[] GetPortNames()
     {
       return SerialPort.GetPortNames();
     }
 
-    public void Open(string portname, int baud)
+    public void SetConnectionParams(string portname, int baud)
     {
-      serialPort.PortName = portname;
-      serialPort.BaudRate = baud;
-
-      binexLibReceiver.Reset();
-
-      serialPort.Open();
-      serialPort.DataReceived += SerialPort_DataReceived;
+      PortName = portname;
+      BaudRate = baud;
     }
 
     public bool IsConnected()
@@ -58,6 +115,8 @@ namespace MCUUpdater.Connectors
 
     // Событие для передачи данных
     public event EventHandler<byte[]> DataReceived;
+
+    public event EventHandler<string> ConnectionError;
 
     private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
     {
@@ -89,6 +148,10 @@ namespace MCUUpdater.Connectors
       //var str = BitConverter.ToString(dbgBuffer.ToArray(), 0, dbgBuffer.Count);
       //Log.Information($"(SerialConnector) Data Received: {str}");
     }
-  }
 
+    private void RaiseConnectionError(string message)
+    {
+      ConnectionError?.Invoke(this, message);
+    }
+  }
 }
