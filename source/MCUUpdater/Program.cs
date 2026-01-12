@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using MCUUpdater.Bootloader;
 using MCUUpdater.Connectors;
 using static MCUUpdater.MCUUpdater;
 
@@ -86,17 +86,20 @@ namespace MCUUpdater
       try
       {
         Console.WriteLine($"Connecting to {port} at {baudRate} baud...");
-        
+
         //SerialPortConnector serialPortConnector = new SerialPortConnector();
         //serialPortConnector.SetConnectionParams(port, baudRate);
-        
+
         #region Тест TCP-транспорта
         TCPClientConnector tcpConnector = new TCPClientConnector();
         tcpConnector.SetConnectionParams("127.0.0.1", 7777);
         var serialPortConnector = tcpConnector;
         #endregion
 
-        BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(serialPortConnector);
+        IBootloaderTransport transport = new BootloaderTransport(serialPortConnector);
+        transport.ResponseTimeout = 500;
+
+        BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(transport);
         BootloaderWorkflow bootloader = new BootloaderWorkflow(bootloaderProtocol, serialPortConnector);
 
         bootloader.EraseProgress += Bootloader_EraseProgress;

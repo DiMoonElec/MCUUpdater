@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using DiMoon.Protocols;
-using MCUUpdater.Connectors;
 
-namespace MCUUpdater
+namespace MCUUpdater.Bootloader
 {
   internal class BootloaderProtocol : IBootloaderProtocol
   {
@@ -17,22 +15,14 @@ namespace MCUUpdater
     const byte CMD_BOOTLOADER_SET_PERMANENT_DATA = 0x77;
     const byte CMD_BOOTLOADER_ERASE_USER_DATA = 0x78;
 
-    const int ResponseTimeout = 500;
-
-    protected IDeviceConnector DeviceConnector;
-
     public event BootloaderErasureProgressDelegate BootloaderMemoryErasureProgress;
     public event BootloaderErasureProgressDelegate BootloaderUserDataErasureProgress;
 
-    private readonly BinexLibReceiver binexLibReceiver = new BinexLibReceiver(512);
-    private readonly BinexLibTransmitter binexLibTransmitter = new BinexLibTransmitter();
+    private IBootloaderTransport Transport;
 
-    private PacketQueue respQueue = new PacketQueue(128);
-
-    public BootloaderProtocol(IDeviceConnector deviceConnector)
+    public BootloaderProtocol(IBootloaderTransport transport)
     {
-      DeviceConnector = deviceConnector;
-      DeviceConnector.DataReceived += DeviceConnector_DataReceived;
+      Transport = transport;
     }
 
     public BootloaderProtocolActionResult BootloaderActivate()
@@ -43,14 +33,14 @@ namespace MCUUpdater
       req.AddRange(System.Text.Encoding.ASCII.GetBytes("ACTIVATE"));
 
       //Отправляем запрос
-      var sendResult = SendReq(req.ToArray());
+      var sendResult = Transport.Send(req.ToArray());
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = respQueue.Pop(ResponseTimeout);
+      var resp = Transport.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
@@ -71,7 +61,7 @@ namespace MCUUpdater
     public BootloaderProtocolActionResult BootloaderBegin_V0()
     {
       //Отправляем запрос
-      var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_BEGIN });
+      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_BEGIN });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
@@ -80,7 +70,7 @@ namespace MCUUpdater
       for (; ; )
       {
         //Ждем ответ
-        var resp = respQueue.Pop(ResponseTimeout);
+        var resp = Transport.Receive();
 
         //Проверяем ошибку таймаута ожедания ответа
         if (resp == null)
@@ -119,7 +109,7 @@ namespace MCUUpdater
       req.AddRange(Convert.FromBase64String(header));
 
       //Отправляем запрос
-      var sendResult = SendReq(req.ToArray());
+      var sendResult = Transport.Send(req.ToArray());
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
@@ -128,7 +118,7 @@ namespace MCUUpdater
       for (; ; )
       {
         //Ждем ответ
-        var resp = respQueue.Pop(ResponseTimeout);
+        var resp = Transport.Receive();
 
         //Проверяем ошибку таймаута ожедания ответа
         if (resp == null)
@@ -172,14 +162,14 @@ namespace MCUUpdater
       req.AddRange(Convert.FromBase64String(frame));
 
       //Отправляем запрос
-      var sendResult = SendReq(req.ToArray());
+      var sendResult = Transport.Send(req.ToArray());
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = respQueue.Pop(ResponseTimeout);
+      var resp = Transport.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
@@ -200,14 +190,14 @@ namespace MCUUpdater
     public BootloaderProtocolActionResult BootloaderWrite()
     {
       //Отправляем запрос
-      var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_WRITE });
+      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_WRITE });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = respQueue.Pop(ResponseTimeout);
+      var resp = Transport.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
@@ -227,14 +217,14 @@ namespace MCUUpdater
     public BootloaderProtocolActionResult BootloaderEnd()
     {
       //Отправляем запрос
-      var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_END });
+      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_END });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = respQueue.Pop(ResponseTimeout);
+      var resp = Transport.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
@@ -254,7 +244,7 @@ namespace MCUUpdater
     public BootloaderProtocolActionResult BootloaderCheckApplicationCRC(out bool Result)
     {
       //Отправляем запрос
-      var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_CHECK_CRC });
+      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_CHECK_CRC });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
@@ -264,7 +254,7 @@ namespace MCUUpdater
       }
 
       //Ждем ответ
-      var resp = respQueue.Pop(ResponseTimeout);
+      var resp = Transport.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
@@ -300,14 +290,14 @@ namespace MCUUpdater
     public BootloaderProtocolActionResult BootloaderApplicationRun()
     {
       //Отправляем запрос
-      var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_APP_RUN });
+      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_APP_RUN });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
         return BootloaderProtocolActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = respQueue.Pop(ResponseTimeout);
+      var resp = Transport.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
@@ -327,7 +317,7 @@ namespace MCUUpdater
     public BootloaderProtocolActionResult BootloaderEraseUserData()
     {
       //Отправляем запрос
-      var sendResult = SendReq(new byte[] { CMD_BOOTLOADER_ERASE_USER_DATA });
+      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_ERASE_USER_DATA });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
@@ -336,7 +326,7 @@ namespace MCUUpdater
       for (; ; )
       {
         //Ждем ответ
-        var resp = respQueue.Pop(ResponseTimeout);
+        var resp = Transport.Receive();
 
         //Проверяем ошибку таймаута ожедания ответа
         if (resp == null)
@@ -371,33 +361,5 @@ namespace MCUUpdater
     {
       throw new NotImplementedException();
     }
-
-    #region Вспомогательные методы
-
-    private void DeviceConnector_DataReceived(object sender, byte[] data)
-    {
-      foreach (var d in data)
-      {
-        if (binexLibReceiver.Input(d))
-        {
-          var pack = binexLibReceiver.GetReceiveData();
-          respQueue.Push(pack);
-        }
-      }
-    }
-
-    private bool SendReq(byte[] req)
-    {
-      if (DeviceConnector.IsConnected() == false)
-        return false;
-
-      respQueue.Clear();
-
-      var pack = binexLibTransmitter.BuildPackage(req);
-      DeviceConnector.Write(pack);
-      return true;
-    }
-
-    #endregion
   }
 }

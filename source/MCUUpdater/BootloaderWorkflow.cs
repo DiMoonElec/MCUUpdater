@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MCUUpdater.Bootloader;
 using MCUUpdater.Connectors;
 
 namespace MCUUpdater
@@ -74,7 +71,6 @@ namespace MCUUpdater
           return UpdateProtocolVersion1(updateFile, connectionTimeout);
         else
           throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
-
       }
 
       private BootloaderWorkflowResult UpdateProtocolVersion1(FirmwareUpdateFile updateFile, int connectionTimeout)

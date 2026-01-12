@@ -43,13 +43,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BootloaderProtocol.cs" />
+    <Compile Include="Bootloader\BootloaderProtocol.cs" />
     <Compile Include="BootloaderWorkflow.cs" />
+    <Compile Include="Bootloader\BootloaderTransport.cs" />
+    <Compile Include="Bootloader\IBootloaderTransport.cs" />
     <Compile Include="Connectors\IDeviceConnector.cs" />
     <Compile Include="Connectors\SerialPortConnector.cs" />
     <Compile Include="Connectors\TCPClientConnector.cs" />
-    <Compile Include="IBootloaderProtocol.cs" />
-    <Compile Include="PacketQueue.cs" />
+    <Compile Include="Bootloader\IBootloaderProtocol.cs" />
+    <Compile Include="Bootloader\PacketQueue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UpdateFile\FirmwareUpdateFile.cs" />
