@@ -1,8 +1,10 @@
 ﻿namespace MCUUpdater.Bootloader
 {
-  internal interface IBootloaderTransport
+  public interface IBootloaderTransport
   {
-    int ResponseTimeout { get; set; }
+    int ResponseTimeout_ms { get; set; }
+    bool Connect();
+    void Disconnect();
     bool Send(byte[] data);
     byte[] Receive();
   }

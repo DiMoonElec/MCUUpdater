@@ -25,6 +25,9 @@ namespace MCUUpdater.Bootloader
       Transport = transport;
     }
 
+    public bool Connect() => Transport.Connect();
+    public void Disconnect() => Transport.Disconnect();
+
     public BootloaderProtocolActionResult BootloaderActivate()
     {
       //Формируем запрос

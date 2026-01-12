@@ -1,160 +1,92 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using MCUUpdater.Bootloader;
-using MCUUpdater.Connectors;
-using static MCUUpdater.MCUUpdater;
+using MCUUpdater.CLI;
 
 namespace MCUUpdater
 {
   internal class Program
   {
-    private static int currentUploadProgress = 0;
-
-    static void Main(string[] args)
+    static int Main(string[] args)
     {
-      if (args.Length < 3)
-      {
-        ShowUsage();
-        return;
-      }
-
-      string port = null;
-      int baudRate = 115200;
-      string filePath = null;
-      bool doUpdate = false;
-      bool eraseUserData = false;
-      int connectionTimeout = 60;
-
-      // Parse arguments
-      for (int i = 0; i < args.Length; i++)
-      {
-        switch (args[i])
-        {
-          case "--port":
-            port = args[++i];
-            break;
-          case "--baud":
-            if (!int.TryParse(args[++i], out baudRate))
-            {
-              Console.WriteLine("Invalid baud rate.");
-              return;
-            }
-            break;
-          case "--timeout":
-            if (!int.TryParse(args[++i], out connectionTimeout))
-            {
-              Console.WriteLine("Invalid timeout.");
-              return;
-            }
-            break;
-          case "--file":
-            filePath = args[++i];
-            break;
-          case "--update":
-            doUpdate = true;
-            break;
-          case "--erase-user":
-            eraseUserData = true;
-            break;
-          default:
-            Console.WriteLine($"Unknown argument: {args[i]}");
-            ShowUsage();
-            return;
-        }
-      }
-
-      if (port == null)
-      {
-        Console.WriteLine("Serial port not specified.");
-        ShowUsage();
-        return;
-      }
-
-      if (doUpdate && filePath == null)
-      {
-        Console.WriteLine("Update mode requires a firmware file.");
-        ShowUsage();
-        return;
-      }
-
-      if (doUpdate && eraseUserData)
-      {
-        Console.WriteLine("Please choose only one operation: --update or --erase-user");
-        ShowUsage();
-        return;
-      }
-
       try
       {
-        Console.WriteLine($"Connecting to {port} at {baudRate} baud...");
+        CLIOptions options = CLIParser.Parse(args);
 
-        //SerialPortConnector serialPortConnector = new SerialPortConnector();
-        //serialPortConnector.SetConnectionParams(port, baudRate);
-
-        #region Тест TCP-транспорта
-        TCPClientConnector tcpConnector = new TCPClientConnector();
-        tcpConnector.SetConnectionParams("127.0.0.1", 7777);
-        var serialPortConnector = tcpConnector;
-        #endregion
-
-        IBootloaderTransport transport = new BootloaderTransport(serialPortConnector);
-        transport.ResponseTimeout = 500;
-
-        BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(transport);
-        BootloaderWorkflow bootloader = new BootloaderWorkflow(bootloaderProtocol, serialPortConnector);
-
-        bootloader.EraseProgress += Bootloader_EraseProgress;
-        bootloader.UserDataEraseProgress += Bootloader_UserDataEraseProgress;
-        bootloader.UploadProgress += Bootloader_UploadProgress;
-        bootloader.UploadEnd += Bootloader_UploadEnd;
-
-        BootloaderWorkflowResult result;
-
-        if (doUpdate)
+        if (options.ShowHelp)
         {
-          var update_file = FirmwareUpdateParser.Parse(filePath);
-          Console.WriteLine($"File loaded: Protocol Version {update_file.ProtocolVersion}, Format Version {update_file.FormatVersion}");
-          Console.WriteLine("Starting firmware update...");
-          result = bootloader.Update(update_file, connectionTimeout);
-          Console.WriteLine();
-        }
-        else if (eraseUserData)
-        {
-          Console.WriteLine("Erasing user settings area...");
-          result = bootloader.EraseUserData();
-          Console.WriteLine("Done.\n");
-        }
-        else
-        {
-          Console.WriteLine("No operation specified.");
-          ShowUsage();
-          return;
+          DisplayHelp();
+          return 0;
         }
 
-        switch (result)
-        {
-          case BootloaderWorkflowResult.OK:
-            Console.WriteLine("Operation completed successfully.");
-            break;
-          case BootloaderWorkflowResult.ConnectionError:
-            Console.WriteLine("Connection error occurred.");
-            break;
-          case BootloaderWorkflowResult.ErasingError:
-            Console.WriteLine("Erasing error occurred.");
-            break;
-          case BootloaderWorkflowResult.UpdateError:
-            Console.WriteLine("Firmware update failed.");
-            break;
-          case BootloaderWorkflowResult.IncompatibleDeviceError:
-            Console.WriteLine("The firmware is not compatible with this device.");
-            break;
-          default:
-            Console.WriteLine("Unknown error.");
-            break;
-        }
+        // ===== Normal execution =====
+        return Run(options);
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine("Error: " + ex.Message);
+        Console.WriteLine("Use -h or --help to see usage information.");
+        Console.WriteLine();
+        return 1;
+      }
+    }
+
+    private static int Run(CLIOptions options)
+    {
+      try
+      {
+        var command = options.Command;
+
+        if (command is CLIUpdateCommand updateCommand)
+          return RunUpdateCommand(options, updateCommand);
       }
       catch (Exception ex)
       {
         Console.WriteLine($"Fatal error: {ex.Message}");
+      }
+      return 1;
+    }
+
+    private static int RunUpdateCommand(CLIOptions options, CLIUpdateCommand updateCommand)
+    {
+      var transport = BootloaderTransportFactory.Create(updateCommand.Transport);
+      BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(transport);
+      BootloaderWorkflow bootloaderWorkflow = new BootloaderWorkflow(bootloaderProtocol);
+
+      bootloaderWorkflow.EraseProgress += Bootloader_EraseProgress;
+      bootloaderWorkflow.UserDataEraseProgress += Bootloader_UserDataEraseProgress;
+      bootloaderWorkflow.UploadProgress += Bootloader_UploadProgress;
+      bootloaderWorkflow.UploadEnd += Bootloader_UploadEnd;
+
+      BootloaderWorkflowResult result;
+
+      var update_file = FirmwareUpdateParser.Parse(updateCommand.FirmwareFile);
+      Console.WriteLine($"File loaded: Protocol Version {update_file.ProtocolVersion}, Format Version {update_file.FormatVersion}");
+      Console.WriteLine("Starting firmware update...");
+      result = bootloaderWorkflow.Update(update_file, options.WaitTimeoutSec);
+      Console.WriteLine();
+
+      switch (result)
+      {
+        case BootloaderWorkflowResult.OK:
+          Console.WriteLine("Operation completed successfully.");
+          return 0;
+        case BootloaderWorkflowResult.ConnectionError:
+          Console.WriteLine("Connection error occurred.");
+          return 1;
+        case BootloaderWorkflowResult.ErasingError:
+          Console.WriteLine("Erasing error occurred.");
+          return 1;
+        case BootloaderWorkflowResult.UpdateError:
+          Console.WriteLine("Firmware update failed.");
+          return 1;
+        case BootloaderWorkflowResult.IncompatibleDeviceError:
+          Console.WriteLine("The firmware is not compatible with this device.");
+          return 1;
+        default:
+          Console.WriteLine("Unknown error.");
+          return 1;
       }
     }
 
@@ -174,7 +106,6 @@ namespace MCUUpdater
 
     private static void Bootloader_UploadProgress(int percent)
     {
-      currentUploadProgress = percent;
       DrawProgressBar(percent, 50, "Uploading");
     }
 
@@ -191,18 +122,30 @@ namespace MCUUpdater
       Console.Write($"\r{label}: [{bar}] {percent}%");
     }
 
-    private static void ShowUsage()
+    private static void DisplayHelp()
     {
-      Console.WriteLine("Usage:");
-      Console.WriteLine("  MCUUpdater.exe --update --port COMx --baud 115200 --timeout 60 --file firmware.xbin");
-      Console.WriteLine("  MCUUpdater.exe --erase-user --port COMx --baud 115200");
-      Console.WriteLine();
-      Console.WriteLine("  --update        Perform firmware update");
-      Console.WriteLine("  --erase-user    Erase user data flash area");
-      Console.WriteLine("  --port          Serial COM port");
-      Console.WriteLine("  --baud          Baud rate (e.g., 115200)");
-      Console.WriteLine("  --timeout       Connection timeout");
-      Console.WriteLine("  --file          Path to firmware update file");
+      // Получаем текущую сборку
+      Assembly assembly = Assembly.GetExecutingAssembly();
+
+      // Имя ресурса: <Namespace>.<Filename> (если файл в корне проекта)
+      string resourceName = "MCUUpdater.CLI.Help.txt";
+
+      // Открываем поток для чтения ресурса
+      using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+      {
+        if (stream == null)
+        {
+          Console.WriteLine("Ошибка: Ресурс справки не найден.");
+          return;
+        }
+
+        // Читаем текст из потока
+        using (StreamReader reader = new StreamReader(stream))
+        {
+          string helpText = reader.ReadToEnd();
+          Console.WriteLine(helpText);
+        }
+      }
     }
   }
 }

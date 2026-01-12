@@ -43,10 +43,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BootloaderTransportFactory.cs" />
     <Compile Include="Bootloader\BootloaderProtocol.cs" />
     <Compile Include="BootloaderWorkflow.cs" />
     <Compile Include="Bootloader\BootloaderTransport.cs" />
     <Compile Include="Bootloader\IBootloaderTransport.cs" />
+    <Compile Include="CLI\CliModel.cs" />
+    <Compile Include="CLI\CliParser.cs" />
     <Compile Include="Connectors\IDeviceConnector.cs" />
     <Compile Include="Connectors\SerialPortConnector.cs" />
     <Compile Include="Connectors\TCPClientConnector.cs" />
@@ -65,6 +68,9 @@
       <Project>{E81447FE-9D31-4119-B33E-21FA52E93972}</Project>
       <Name>BinexLib</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CLI\Help.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

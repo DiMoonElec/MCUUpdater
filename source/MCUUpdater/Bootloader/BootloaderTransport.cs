@@ -6,7 +6,7 @@ namespace MCUUpdater.Bootloader
 {
   internal class BootloaderTransport : IBootloaderTransport
   {
-    public int ResponseTimeout { get; set; } = 500;
+    public int ResponseTimeout_ms { get; set; } = 500;
 
     private IDeviceConnector DeviceConnector;
 
@@ -14,6 +14,9 @@ namespace MCUUpdater.Bootloader
     private readonly BinexLibTransmitter binexLibTransmitter = new BinexLibTransmitter();
 
     private PacketQueue respQueue = new PacketQueue(128);
+
+    public bool Connect() => DeviceConnector.Connect();
+    public void Disconnect() => DeviceConnector.Disconnect();
 
     public BootloaderTransport(IDeviceConnector deviceConnector)
     {
@@ -34,7 +37,7 @@ namespace MCUUpdater.Bootloader
 
     public byte[] Receive()
     {
-      return respQueue.Pop(ResponseTimeout);
+      return respQueue.Pop(ResponseTimeout_ms);
     }
 
     private void DeviceConnector_DataReceived(object sender, byte[] data)

@@ -23,6 +23,10 @@
     /// </summary>
     event BootloaderErasureProgressDelegate BootloaderUserDataErasureProgress;
 
+    bool Connect();
+
+    void Disconnect();
+
     /// <summary>
     /// Перевести загрузчик в активное состояние
     /// </summary>
