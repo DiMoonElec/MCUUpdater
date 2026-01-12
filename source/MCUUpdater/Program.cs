@@ -86,8 +86,15 @@ namespace MCUUpdater
       try
       {
         Console.WriteLine($"Connecting to {port} at {baudRate} baud...");
-        SerialPortConnector serialPortConnector = new SerialPortConnector();
-        serialPortConnector.SetConnectionParams(port, baudRate);
+        
+        //SerialPortConnector serialPortConnector = new SerialPortConnector();
+        //serialPortConnector.SetConnectionParams(port, baudRate);
+        
+        #region Тест TCP-транспорта
+        TCPClientConnector tcpConnector = new TCPClientConnector();
+        tcpConnector.SetConnectionParams("127.0.0.1", 7777);
+        var serialPortConnector = tcpConnector;
+        #endregion
 
         BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(serialPortConnector);
         BootloaderWorkflow bootloader = new BootloaderWorkflow(bootloaderProtocol, serialPortConnector);

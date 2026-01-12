@@ -47,6 +47,7 @@
     <Compile Include="BootloaderWorkflow.cs" />
     <Compile Include="Connectors\IDeviceConnector.cs" />
     <Compile Include="Connectors\SerialPortConnector.cs" />
+    <Compile Include="Connectors\TCPClientConnector.cs" />
     <Compile Include="IBootloaderProtocol.cs" />
     <Compile Include="PacketQueue.cs" />
     <Compile Include="Program.cs" />
