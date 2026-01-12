@@ -9,15 +9,11 @@ namespace MCUUpdater.Connectors
   /// </summary>
   internal interface IDeviceConnector
   {
+    int ReadTimeout { get; set; }
+    int WriteTimeout { get; set; }
+
     /// <summary>
-    /// Выполняет попытку инициализировать канал связи, например, 
-    /// для COM-порта успешно открыть порт, 
-    /// для TCP успешно подключиться к серверу,
-    /// для UDP успешно открыть UDP-соединение,
-    /// и т.д.
-    /// Тут не должен производиться какой-либо обмен данными с Bootloader-ом, 
-    /// и реализация IDeviceConnector не должна заботиться 
-    /// о фактическом наличии связи с Bootloader-ом.
+    /// Выполняет попытку инициализировать транспортный уровень канала связи
     /// </summary>
     /// <returns>true - канал связи настроен, 
     /// false - не удалось настроить канал связи</returns>
@@ -35,15 +31,20 @@ namespace MCUUpdater.Connectors
     bool IsConnected();
 
     /// <summary>
-    /// Отправить поток данных в Bootloader.
+    /// Отправить массив в поток вывода
     /// </summary>
     /// <param name="data">Полезные денные</param>
     void Write(byte[] data);
 
+ 
     /// <summary>
-    /// Были получены данные от Bootloader-а
+    /// Выполняет чтение из потока ввода
     /// </summary>
-    event EventHandler<byte[]> DataReceived;
+    /// <param name="buffer">Буфер, в который производится чтение</param>
+    /// <param name="offset">Смещение в буфере</param>
+    /// <param name="count">Количество байт для чтения</param>
+    /// <returns>Количество прочитанных байт, если 0, то выход по тайм-ауту</returns>
+    int Read(byte[] buffer, int offset, int count);
 
     /// <summary>
     /// Событие, содержащее информацию об конкретной ошибке 

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MCUUpdater.Connectors
 {
@@ -9,7 +7,6 @@ namespace MCUUpdater.Connectors
   {
     private TcpClient tcpClient;
     private NetworkStream netStream;
-    private CancellationTokenSource receiveCts;
 
     public string Host { get; private set; }
     public int Port { get; private set; }
@@ -19,10 +16,8 @@ namespace MCUUpdater.Connectors
     /// </summary>
     public int ConnectTimeoutMs { get; private set; } = 5000;
 
-    /// <summary>
-    /// Размер буфера для чтения входящих данных.
-    /// </summary>
-    public int ReadBufferSize { get; set; } = 1024;
+    public int ReadTimeout { get; set; }
+    public int WriteTimeout { get; set; }
 
     public TCPClientConnector()
     {
@@ -88,8 +83,8 @@ namespace MCUUpdater.Connectors
 
         // Открываем поток и запускаем приём
         netStream = tcpClient.GetStream();
-        StartReceiveLoop();
-
+        netStream.ReadTimeout = ReadTimeout;
+        netStream.WriteTimeout = WriteTimeout;
         return true;
       }
       catch (SocketException sex)
@@ -108,13 +103,6 @@ namespace MCUUpdater.Connectors
     {
       try
       {
-        // Отменяем приём
-        try
-        {
-          receiveCts?.Cancel();
-        }
-        catch { /* ignore */ }
-
         // Закрываем поток и клиент
         if (netStream != null)
         {
@@ -128,10 +116,7 @@ namespace MCUUpdater.Connectors
           tcpClient = null;
         }
       }
-      finally
-      {
-        receiveCts = null;
-      }
+      catch { }
     }
 
     public bool IsConnected()
@@ -175,77 +160,37 @@ namespace MCUUpdater.Connectors
       }
     }
 
-    public event EventHandler<byte[]> DataReceived;
-    public event EventHandler<string> ConnectionError;
-
-    private void StartReceiveLoop()
+    public int Read()
     {
-      // отмена предыдущей задачи, если есть
+      if (netStream == null)
+        return -1;
+
       try
       {
-        receiveCts?.Cancel();
+        return netStream.ReadByte();
       }
-      catch { }
-
-      receiveCts = new CancellationTokenSource();
-      var token = receiveCts.Token;
-
-      Task.Run(async () =>
+      catch
       {
-        var buffer = new byte[ReadBufferSize];
-
-        try
-        {
-          while (!token.IsCancellationRequested && IsConnected())
-          {
-            int read = 0;
-            try
-            {
-              read = await netStream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-              break;
-            }
-            catch (ObjectDisposedException)
-            {
-              break;
-            }
-            catch (Exception exRead)
-            {
-              RaiseConnectionError($"Ошибка при чтении: {exRead.Message}");
-              break;
-            }
-
-            if (read == 0)
-            {
-              // Соединение закрыто удалённой стороной
-              RaiseConnectionError("Соединение закрыто удалённой стороной.");
-              Disconnect();
-              break;
-            }
-
-            var outBuf = new byte[read];
-            Buffer.BlockCopy(buffer, 0, outBuf, 0, read);
-
-            try
-            {
-              DataReceived?.Invoke(this, outBuf);
-            }
-            catch
-            {
-              // Защищаем цикл от исключений обработчиков событий
-            }
-          }
-        }
-        finally
-        {
-          // При выходе из цикла — убедимся, что соединение закрыто
-          try { Disconnect(); } catch { }
-        }
-      }, token);
+        return -1;
+      }
     }
 
+    public int Read(byte[] buffer, int offset, int count)
+    {
+      if (netStream == null)
+        return 0;
+
+      try
+      {
+        return netStream.Read(buffer, offset, count);
+      }
+      catch
+      {
+        return 0;
+      }
+    }
+
+    public event EventHandler<string> ConnectionError;
     private void RaiseConnectionError(string message)
     {
       try

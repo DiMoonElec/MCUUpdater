@@ -54,7 +54,8 @@
     <Compile Include="Connectors\SerialPortConnector.cs" />
     <Compile Include="Connectors\TCPClientConnector.cs" />
     <Compile Include="Bootloader\IBootloaderProtocol.cs" />
-    <Compile Include="Bootloader\PacketQueue.cs" />
+    <Compile Include="MISC\PacketQueue.cs" />
+    <Compile Include="MISC\CircularQueue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UpdateFile\FirmwareUpdateFile.cs" />

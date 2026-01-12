@@ -1,6 +1,7 @@
-﻿using DiMoon.Protocols;
-using MCUUpdater.Bootloader.MISC;
+﻿using System.Diagnostics;
+using DiMoon.Protocols;
 using MCUUpdater.Connectors;
+using MCUUpdater.MISC;
 
 namespace MCUUpdater.Bootloader
 {
@@ -13,22 +14,27 @@ namespace MCUUpdater.Bootloader
     private readonly BinexLibReceiver binexLibReceiver = new BinexLibReceiver(512);
     private readonly BinexLibTransmitter binexLibTransmitter = new BinexLibTransmitter();
 
-    private PacketQueue respQueue = new PacketQueue(128);
+    private readonly CircularQueue<byte[]> queue = new CircularQueue<byte[]>(128);
+
+    private byte[] receiveBuffer = new byte[256];
 
     public bool Connect() => DeviceConnector.Connect();
+    
     public void Disconnect() => DeviceConnector.Disconnect();
 
     public BootloaderTransport(IDeviceConnector deviceConnector)
     {
       DeviceConnector = deviceConnector;
-      DeviceConnector.DataReceived += DeviceConnector_DataReceived;
+      deviceConnector.ReadTimeout = 100;
+      deviceConnector.WriteTimeout = ResponseTimeout_ms;
     }
+    
     public bool Send(byte[] data)
     {
       if (DeviceConnector.IsConnected() == false)
         return false;
 
-      respQueue.Clear();
+      queue.Clear();
 
       var pack = binexLibTransmitter.BuildPackage(data);
       DeviceConnector.Write(pack);
@@ -37,19 +43,29 @@ namespace MCUUpdater.Bootloader
 
     public byte[] Receive()
     {
-      return respQueue.Pop(ResponseTimeout_ms);
-    }
+      long start = Stopwatch.GetTimestamp();
 
-    private void DeviceConnector_DataReceived(object sender, byte[] data)
-    {
-      foreach (var d in data)
+      // Конвертируем миллисекунды в системные тики
+      long timeoutTicks = (long)(ResponseTimeout_ms * Stopwatch.Frequency / 1000);
+
+      while ((Stopwatch.GetTimestamp() - start) < timeoutTicks)
       {
-        if (binexLibReceiver.Input(d))
+        if (queue.Count > 0)
+          return queue.Dequeue();
+
+        int count = DeviceConnector.Read(receiveBuffer, 0, receiveBuffer.Length);
+        if (count > 0)
         {
-          var pack = binexLibReceiver.GetReceiveData();
-          respQueue.Push(pack);
+          for (int i = 0; i < count; i++)
+          {
+            if (binexLibReceiver.Input(receiveBuffer[i]))
+              queue.Enqueue(binexLibReceiver.GetReceiveData());
+          }
         }
       }
+
+      //Тайм-аут приема пакета
+      return null;
     }
   }
 }

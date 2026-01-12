@@ -8,18 +8,19 @@ namespace MCUUpdater.Connectors
   internal class SerialPortConnector : IDeviceConnector
   {
     private readonly SerialPort serialPort = new SerialPort();
+    private Stream stream;
 
     public string PortName { get; private set; }
     public int BaudRate { get; private set; }
+
+    public int ReadTimeout { get; set; }
+    public int WriteTimeout { get; set; }
 
     public SerialPortConnector()
     {
       serialPort.StopBits = StopBits.One;
       serialPort.Parity = Parity.None;
       serialPort.DataBits = 8;
-
-      serialPort.ReadBufferSize = 1024;
-      serialPort.WriteBufferSize = 1024;
     }
 
     public bool Connect()
@@ -40,9 +41,6 @@ namespace MCUUpdater.Connectors
         serialPort.PortName = PortName;
         serialPort.BaudRate = BaudRate;
 
-        serialPort.DataReceived -= SerialPort_DataReceived;
-        serialPort.DataReceived += SerialPort_DataReceived;
-
         serialPort.Open();
 
         if (!serialPort.IsOpen)
@@ -50,7 +48,9 @@ namespace MCUUpdater.Connectors
           RaiseConnectionError($"Не удалось открыть порт {PortName}");
           return false;
         }
-
+        stream = serialPort.BaseStream;
+        stream.ReadTimeout = ReadTimeout;
+        stream.WriteTimeout = WriteTimeout;
         return true;
       }
       catch (UnauthorizedAccessException)
@@ -75,6 +75,8 @@ namespace MCUUpdater.Connectors
 
     public void Disconnect()
     {
+      stream = null;
+
       if (serialPort.IsOpen)
         serialPort.Close();
     }
@@ -99,41 +101,58 @@ namespace MCUUpdater.Connectors
     {
       if (serialPort.IsOpen)
       {
-        serialPort.DataReceived -= SerialPort_DataReceived;
         serialPort.Close();
       }
     }
 
     public void Write(byte[] data)
     {
-      serialPort.Write(data, 0, data.Length);
+      if (stream != null)
+        stream.Write(data, 0, data.Length);
     }
 
-    // Событие для передачи данных
-    public event EventHandler<byte[]> DataReceived;
+    public int Read()
+    {
+      if (stream == null)
+        return -1;
+
+      try
+      {
+        return stream.ReadByte();
+      }
+      catch
+      {
+        return -1;
+      }
+    }
+
+    public int Read(byte[] buffer, int offset, int count)
+    {
+      if (stream == null)
+        return 0;
+
+      try
+      {
+        return stream.Read(buffer, offset, count);
+      }
+      catch
+      {
+        return 0;
+      }
+    }
 
     public event EventHandler<string> ConnectionError;
 
-    private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+    private void RaiseConnectionError(string message)
     {
       try
       {
-        var bytes = serialPort.BytesToRead;
-        var buffer = new byte[bytes];
-        serialPort.Read(buffer, 0, bytes);
-
-        DataReceived?.Invoke(this, buffer);
+        ConnectionError?.Invoke(this, message);
       }
-      catch (Exception ex)
+      catch
       {
-        // Логирование или обработка ошибок при чтении
-        Console.WriteLine($"[Error]: {ex.Message}");
+        // Ничего не делаем, чтобы ошибка обработчика не ломала логику
       }
-    }
-
-    private void RaiseConnectionError(string message)
-    {
-      ConnectionError?.Invoke(this, message);
     }
   }
 }
