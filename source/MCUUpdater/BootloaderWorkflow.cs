@@ -10,6 +10,7 @@ namespace MCUUpdater
   {
     OK = 0,
     ConnectionError,
+    ConnectionLost,
     ErasingError,
     IncompatibleDeviceError,
     UpdateError,
@@ -92,23 +93,24 @@ namespace MCUUpdater
 
       BootloaderProtocolActionResult result;
 
-      //Очистка flash-памяти
-      if (EraseBegin != null)
-        EraseBegin();
+      /**** Очистка flash-памяти ****/
 
-      result = Bootloader.BootloaderBegin_V1(updateFile.HeaderChunkBase64.Trim());
+      EraseBegin?.Invoke();
 
-      if (EraseEnd != null)
-        EraseEnd();
+      result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderBegin_V1(updateFile.HeaderChunkBase64.Trim()));
 
       if (result == BootloaderProtocolActionResult.IncompatibleDeviceError)
         return BootloaderWorkflowResult.IncompatibleDeviceError;
+      else if (result == BootloaderProtocolActionResult.ConnectionLost)
+        return BootloaderWorkflowResult.ConnectionLost;
       if (result != BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.ErasingError;
 
-      //Отправка обновления
-      if (UploadBegin != null)
-        UploadBegin();
+      EraseEnd?.Invoke();
+
+      /**** Отправка обновления ****/
+
+      UploadBegin?.Invoke();
 
       var dataChunks = updateFile.DataChunksBase64;
 
@@ -118,44 +120,55 @@ namespace MCUUpdater
 
         if (u != "")
         {
-          result = Bootloader.BootloaderSend(u);
-          if (result != BootloaderProtocolActionResult.OK)
+          result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderSend(u));
+          if (result == BootloaderProtocolActionResult.ConnectionLost)
+            return BootloaderWorkflowResult.ConnectionLost;
+          else if (result != BootloaderProtocolActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
 
-          result = Bootloader.BootloaderWrite();
-          if (result != BootloaderProtocolActionResult.OK)
+
+          result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderWrite());
+
+          if (result == BootloaderProtocolActionResult.ConnectionLost)
+            return BootloaderWorkflowResult.ConnectionLost;
+          else if (result != BootloaderProtocolActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
         }
 
-        if (UploadProgress != null)
-        {
-          int progress = (b * 100) / dataChunks.Count;
-          UploadProgress(progress);
-        }
+        UploadProgress?.Invoke((b * 100) / dataChunks.Count);
       }
 
-      if (UploadEnd != null)
-        UploadEnd();
+      UploadEnd?.Invoke();
 
-      //Завершаем процесс обновления
-      result = Bootloader.BootloaderEnd();
-      if (result != BootloaderProtocolActionResult.OK)
+      /**** Завершаем процесс обновления ****/
+
+      result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderEnd());
+
+      if (result == BootloaderProtocolActionResult.ConnectionLost)
+        return BootloaderWorkflowResult.ConnectionLost;
+      else if (result != BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
 
-      //Проверяем CRC прошивки
-      bool crcOK;
-      result = Bootloader.BootloaderCheckApplicationCRC(out crcOK);
-      if (result != BootloaderProtocolActionResult.OK)
+      /**** Проверяем CRC прошивки ****/
+
+      bool crcOK = false;
+
+      result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderCheckApplicationCRC(out crcOK));
+
+      if (result == BootloaderProtocolActionResult.ConnectionLost)
+        return BootloaderWorkflowResult.ConnectionLost;
+      else if (result != BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
-      if (crcOK == false)
+      else if (crcOK == false)
         return BootloaderWorkflowResult.UpdateError;
 
-      //Запускаем прошивку
+      /**** Запускаем прошивку ****/
+
       result = Bootloader.BootloaderApplicationRun();
       if (result == BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.OK;
       else
-        return BootloaderWorkflowResult.UpdateError;
+        return BootloaderWorkflowResult.ConnectionLost;
     }
 
     private BootloaderWorkflowResult UpdateProtocolVersion0(FirmwareUpdateFile updateFile, int connectionTimeout)
@@ -269,6 +282,59 @@ namespace MCUUpdater
       return true;
     }
 
+    // Обобщённый ретрай с переподключением
+    BootloaderProtocolActionResult ExecuteWithReconnectRetry(
+        Func<BootloaderProtocolActionResult> operation,
+        int maxAttempts = 10,
+        int delayMsOnReconnectFail = 1000)
+    {
+      if (operation == null) throw new ArgumentNullException(nameof(operation));
+      if (maxAttempts < 1) throw new ArgumentOutOfRangeException(nameof(maxAttempts));
+      if (delayMsOnReconnectFail < 0) throw new ArgumentOutOfRangeException(nameof(delayMsOnReconnectFail));
 
+      // Первая попытка отправки запроса
+      BootloaderProtocolActionResult result = operation();
+
+      // Если результат не требует повторения — возвращаем его
+      if (result != BootloaderProtocolActionResult.ConnectionLost)
+        return result;
+
+      // В результате первой попытки вызова operation()
+      // получили ConnectionLost, поэтому запускаем
+      // повтор попыток вызова operation() с предварительным
+      // Reconnect()
+      for (int attempt = 1; attempt < maxAttempts; attempt++)
+      {
+        if (Reconnect())
+        {
+          // В случае успешного переподключения
+          // повторяем отправку команды
+          result = operation();
+
+          // Если результат не требует повторения — возвращаем его
+          if (result != BootloaderProtocolActionResult.ConnectionLost)
+            return result;
+        }
+        else
+        {
+          // Если не удалось переподключиться, то не отправляем команду,
+          // однако, это все равно защитывается как попытка.
+          // Пауза перед следующим переподключением
+          System.Threading.Thread.Sleep(delayMsOnReconnectFail);
+        }
+      }
+
+      // Если попали сюда, то все попытки повторной отправки команды
+      // были исчерпаны, возвращаем ошибку потери связи
+      Bootloader.Disconnect();
+      return BootloaderProtocolActionResult.ConnectionLost;
+    }
+
+
+    private bool Reconnect()
+    {
+      Bootloader.Disconnect();
+      return Bootloader.Connect();
+    }
   }
 }

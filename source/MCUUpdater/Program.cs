@@ -84,6 +84,9 @@ namespace MCUUpdater
         case BootloaderWorkflowResult.IncompatibleDeviceError:
           Console.WriteLine("The firmware is not compatible with this device.");
           return 1;
+        case BootloaderWorkflowResult.ConnectionLost:
+          Console.WriteLine("Connection lost.");
+          return 1;
         default:
           Console.WriteLine("Unknown error.");
           return 1;
