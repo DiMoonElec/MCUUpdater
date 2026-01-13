@@ -143,21 +143,12 @@ namespace MCUUpdater.Connectors
     {
       if (data == null) return;
 
-      try
-      {
-        if (IsConnected())
-        {
-          netStream.Write(data, 0, data.Length);
-        }
-        else
-        {
-          RaiseConnectionError("Попытка записи при закрытом соединении.");
-        }
-      }
-      catch (Exception ex)
-      {
-        RaiseConnectionError($"Ошибка записи: {ex.Message}");
-      }
+      /*
+        Исключения записи в поток будут отлавливаться
+        вышестоящим кодом
+      */
+      if (netStream != null)
+        netStream.Write(data, 0, data.Length);
     }
 
     public int Read()
@@ -184,9 +175,12 @@ namespace MCUUpdater.Connectors
       {
         return netStream.Read(buffer, offset, count);
       }
-      catch
+      catch (Exception ex) when (ex.InnerException is SocketException socket_ex)
       {
-        return 0;
+        if (socket_ex.SocketErrorCode == SocketError.TimedOut)
+          return 0; // Если тайм-аут, то возвращаем 0
+        else
+          throw socket_ex; // Если что-то другое, то пробрасываем исключение далее
       }
     }
 

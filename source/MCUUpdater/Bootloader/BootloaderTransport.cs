@@ -19,7 +19,7 @@ namespace MCUUpdater.Bootloader
     private byte[] receiveBuffer = new byte[256];
 
     public bool Connect() => DeviceConnector.Connect();
-    
+
     public void Disconnect() => DeviceConnector.Disconnect();
 
     public BootloaderTransport(IDeviceConnector deviceConnector)
@@ -28,7 +28,7 @@ namespace MCUUpdater.Bootloader
       deviceConnector.ReadTimeout = 100;
       deviceConnector.WriteTimeout = ResponseTimeout_ms;
     }
-    
+
     public bool Send(byte[] data)
     {
       if (DeviceConnector.IsConnected() == false)
@@ -37,7 +37,18 @@ namespace MCUUpdater.Bootloader
       queue.Clear();
 
       var pack = binexLibTransmitter.BuildPackage(data);
-      DeviceConnector.Write(pack);
+
+      try
+      {
+        DeviceConnector.Write(pack);
+      }
+      catch
+      {
+        // Во время отправки пакета возникли в потоке передачи,
+        // интерпретируем это как обрыв связи
+        return false;
+      }
+
       return true;
     }
 
@@ -53,14 +64,23 @@ namespace MCUUpdater.Bootloader
         if (queue.Count > 0)
           return queue.Dequeue();
 
-        int count = DeviceConnector.Read(receiveBuffer, 0, receiveBuffer.Length);
-        if (count > 0)
+        try
         {
-          for (int i = 0; i < count; i++)
+          int count = DeviceConnector.Read(receiveBuffer, 0, receiveBuffer.Length);
+
+          if (count > 0)
           {
-            if (binexLibReceiver.Input(receiveBuffer[i]))
-              queue.Enqueue(binexLibReceiver.GetReceiveData());
+            for (int i = 0; i < count; i++)
+            {
+              if (binexLibReceiver.Input(receiveBuffer[i]))
+                queue.Enqueue(binexLibReceiver.GetReceiveData());
+            }
           }
+        }
+        catch
+        {
+          // Возникли ошибки потока, интерпретируем это как обрыв связи
+          return null;
         }
       }
 

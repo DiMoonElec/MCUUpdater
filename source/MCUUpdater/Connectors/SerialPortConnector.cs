@@ -107,6 +107,10 @@ namespace MCUUpdater.Connectors
 
     public void Write(byte[] data)
     {
+      /*
+        Исключения записи в поток будут отлавливаться
+        вышестоящим кодом
+      */
       if (stream != null)
         stream.Write(data, 0, data.Length);
     }
@@ -135,7 +139,7 @@ namespace MCUUpdater.Connectors
       {
         return stream.Read(buffer, offset, count);
       }
-      catch
+      catch (TimeoutException ex)
       {
         return 0;
       }
