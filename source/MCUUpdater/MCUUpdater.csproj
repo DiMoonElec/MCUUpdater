@@ -25,7 +25,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -44,34 +44,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BootloaderTransportFactory.cs" />
-    <Compile Include="Bootloader\BootloaderProtocol.cs" />
-    <Compile Include="BootloaderWorkflow.cs" />
-    <Compile Include="Bootloader\BootloaderTransport.cs" />
-    <Compile Include="Bootloader\IBootloaderTransport.cs" />
     <Compile Include="CLI\CliModel.cs" />
     <Compile Include="CLI\CliParser.cs" />
-    <Compile Include="Connectors\IDeviceConnector.cs" />
-    <Compile Include="Connectors\SerialPortConnector.cs" />
-    <Compile Include="Connectors\TCPClientConnector.cs" />
-    <Compile Include="Bootloader\IBootloaderProtocol.cs" />
-    <Compile Include="MISC\PacketQueue.cs" />
-    <Compile Include="MISC\CircularQueue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UpdateFile\FirmwareUpdateFile.cs" />
-    <Compile Include="UpdateFile\FirmwareUpdateParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BinexLib\BinexLib.csproj">
-      <Project>{E81447FE-9D31-4119-B33E-21FA52E93972}</Project>
-      <Name>BinexLib</Name>
-    </ProjectReference>
+    <EmbeddedResource Include="CLI\Help.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="CLI\Help.txt" />
+    <ProjectReference Include="..\PolyBootCore\PolyBootCore.csproj">
+      <Project>{c7acd4b4-e71f-46d8-86d1-e05fc8afc11f}</Project>
+      <Name>PolyBootCore</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

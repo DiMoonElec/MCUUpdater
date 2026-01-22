@@ -1,13 +1,13 @@
 ﻿using System;
 
-namespace MCUUpdater.Connectors
+namespace PolyBootCore.Connectors
 {
 
   /// <summary>
   /// Интерфейс транспортного потока обмена данными
   /// с Bootloader-ом.
   /// </summary>
-  internal interface IDeviceConnector
+  public interface IDeviceConnector
   {
     int ReadTimeout { get; set; }
     int WriteTimeout { get; set; }

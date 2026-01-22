@@ -3,9 +3,9 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 
-namespace MCUUpdater.Connectors
+namespace PolyBootCore.Connectors
 {
-  internal class SerialPortConnector : IDeviceConnector
+  public class SerialPortConnector : IDeviceConnector
   {
     private readonly SerialPort serialPort = new SerialPort();
     private Stream stream;

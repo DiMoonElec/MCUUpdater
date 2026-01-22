@@ -1,4 +1,4 @@
-﻿namespace MCUUpdater.Bootloader
+﻿namespace PolyBootCore.Bootloader.Transport
 {
   public interface IBootloaderTransport
   {

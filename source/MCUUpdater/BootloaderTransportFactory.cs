@@ -1,7 +1,7 @@
 ﻿using System;
-using MCUUpdater.Bootloader;
 using MCUUpdater.CLI;
-using MCUUpdater.Connectors;
+using PolyBootCore.Bootloader.Transport;
+using PolyBootCore.Connectors;
 
 namespace MCUUpdater
 {

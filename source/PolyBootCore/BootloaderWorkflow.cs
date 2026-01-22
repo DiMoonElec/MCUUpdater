@@ -1,7 +1,9 @@
 ﻿using System;
-using MCUUpdater.Bootloader;
+using PolyBootCore.Bootloader;
+using PolyBootCore.Bootloader.Transport;
+using PolyBootCore.UpdateFile;
 
-namespace MCUUpdater
+namespace PolyBootCore
 {
   public delegate void BootloaderEventDelegate();
   public delegate void BootloaderProgressDelegate(int percent);
@@ -16,7 +18,7 @@ namespace MCUUpdater
     UpdateError,
   }
 
-  class BootloaderWorkflow
+  public class BootloaderWorkflow
   {
     IBootloaderProtocol Bootloader;
 
@@ -34,9 +36,9 @@ namespace MCUUpdater
     public event BootloaderProgressDelegate UploadProgress;
 
 
-    public BootloaderWorkflow(IBootloaderProtocol bootloader)
+    public BootloaderWorkflow(IBootloaderTransport transport)
     {
-      Bootloader = bootloader;
+      Bootloader = new BootloaderProtocol(transport);
       Bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
       Bootloader.BootloaderUserDataErasureProgress += bootloaderUserDataErasureProgress;
     }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using PolyBootCore.Bootloader.Transport;
 
-namespace MCUUpdater.Bootloader
+namespace PolyBootCore.Bootloader
 {
   internal class BootloaderProtocol : IBootloaderProtocol
   {

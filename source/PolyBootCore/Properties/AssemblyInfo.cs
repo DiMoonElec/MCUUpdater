@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Общие сведения об этой сборке предоставляются следующим набором
 // набора атрибутов. Измените значения этих атрибутов для изменения сведений,
 // связанные со сборкой.
-[assembly: AssemblyTitle("BinexLib")]
+[assembly: AssemblyTitle("PolyBootCore")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("BinexLib")]
-[assembly: AssemblyCopyright("© 2024-2025 Дмитрий Сивоконь (aka DiMoon Electronics). Все права защищены.")]
+[assembly: AssemblyProduct("PolyBootCore")]
+[assembly: AssemblyCopyright("Copyright ©  2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("e81447fe-9d31-4119-b33e-21fa52e93972")]
+[assembly: Guid("c7acd4b4-e71f-46d8-86d1-e05fc8afc11f")]
 
 // Сведения о версии сборки состоят из указанных ниже четырех значений:
 //

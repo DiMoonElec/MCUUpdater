@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MCUUpdater
+namespace PolyBootCore.UpdateFile
 {
   public sealed class FirmwareUpdateFile
   {

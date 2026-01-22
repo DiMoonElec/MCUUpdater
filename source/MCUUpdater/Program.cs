@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using MCUUpdater.Bootloader;
 using MCUUpdater.CLI;
+using PolyBootCore;
+using PolyBootCore.UpdateFile;
 
 namespace MCUUpdater
 {
@@ -51,8 +52,8 @@ namespace MCUUpdater
     private static int RunUpdateCommand(CLIOptions options, CLIUpdateCommand updateCommand)
     {
       var transport = BootloaderTransportFactory.Create(updateCommand.Transport);
-      BootloaderProtocol bootloaderProtocol = new BootloaderProtocol(transport);
-      BootloaderWorkflow bootloaderWorkflow = new BootloaderWorkflow(bootloaderProtocol);
+      
+      BootloaderWorkflow bootloaderWorkflow = new BootloaderWorkflow(transport);
 
       bootloaderWorkflow.EraseProgress += Bootloader_EraseProgress;
       bootloaderWorkflow.UserDataEraseProgress += Bootloader_UserDataEraseProgress;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MCUUpdater
+namespace PolyBootCore.UpdateFile
 {
   public static class FirmwareUpdateParser
   {

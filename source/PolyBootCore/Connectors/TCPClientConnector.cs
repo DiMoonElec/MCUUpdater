@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Net.Sockets;
 
-namespace MCUUpdater.Connectors
+namespace PolyBootCore.Connectors
 {
-  internal class TCPClientConnector : IDeviceConnector
+  public class TCPClientConnector : IDeviceConnector
   {
     private TcpClient tcpClient;
     private NetworkStream netStream;

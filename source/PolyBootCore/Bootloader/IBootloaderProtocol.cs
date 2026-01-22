@@ -1,6 +1,6 @@
-﻿namespace MCUUpdater.Bootloader
+﻿namespace PolyBootCore.Bootloader
 {
-  public enum BootloaderProtocolActionResult
+  internal enum BootloaderProtocolActionResult
   {
     OK,
     Error,
@@ -9,7 +9,7 @@
     InternalError,
   }
 
-  public delegate void BootloaderErasureProgressDelegate(int numBlocks, int currentBlock);
+  internal delegate void BootloaderErasureProgressDelegate(int numBlocks, int currentBlock);
 
   internal interface IBootloaderProtocol
   {

@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics;
 using DiMoon.Protocols;
-using MCUUpdater.Connectors;
-using MCUUpdater.MISC;
+using PolyBootCore.Connectors;
+using PolyBootCore.MISC;
 
-namespace MCUUpdater.Bootloader
+namespace PolyBootCore.Bootloader.Transport
 {
-  internal class BootloaderTransport : IBootloaderTransport
+  public class BootloaderTransport : IBootloaderTransport
   {
     public int ResponseTimeout_ms { get; set; } = 500;
 

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace MCUUpdater.MISC
+namespace PolyBootCore.MISC
 {
   internal class PacketQueue
   {

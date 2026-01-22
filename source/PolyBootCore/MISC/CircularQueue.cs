@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace MCUUpdater.MISC
+namespace PolyBootCore.MISC
 {
-  public class CircularQueue<T>
+  internal class CircularQueue<T>
   {
     private readonly Queue<T> _queue;
     public int Capacity { get; }
