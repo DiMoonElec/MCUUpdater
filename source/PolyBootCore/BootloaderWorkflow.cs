@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using PolyBootCore.Bootloader;
 using PolyBootCore.Bootloader.Transport;
 using PolyBootCore.UpdateFile;
@@ -16,6 +17,7 @@ namespace PolyBootCore
     ErasingError,
     IncompatibleDeviceError,
     UpdateError,
+    Cancel,
   }
 
   public class BootloaderWorkflow
@@ -36,7 +38,23 @@ namespace PolyBootCore
     public event BootloaderProgressDelegate UploadProgress;
 
 
+    private readonly CancellationToken cancellationToken;
+    private readonly bool hasCancellation = false;
+
     public BootloaderWorkflow(IBootloaderTransport transport)
+    {
+      Init(transport);
+    }
+
+    public BootloaderWorkflow(IBootloaderTransport transport, CancellationToken token)
+    {
+      Init(transport);
+      transport.SetCancellationToken(token);
+      hasCancellation = true;
+      cancellationToken = token;
+    }
+
+    private void Init(IBootloaderTransport transport)
     {
       Bootloader = new BootloaderProtocol(transport);
       Bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
@@ -70,12 +88,23 @@ namespace PolyBootCore
     /// <exception cref="Exception"></exception>
     public BootloaderWorkflowResult Update(FirmwareUpdateFile updateFile, int waitTimeoutSec)
     {
-      if (updateFile.ProtocolVersion == 0)
-        return UpdateProtocolVersion0(updateFile, waitTimeoutSec);
-      else if (updateFile.ProtocolVersion == 1)
-        return UpdateProtocolVersion1(updateFile, waitTimeoutSec);
-      else
-        throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
+      try
+      {
+        if (updateFile.ProtocolVersion == 0)
+          return UpdateProtocolVersion0(updateFile, waitTimeoutSec);
+        else if (updateFile.ProtocolVersion == 1)
+          return UpdateProtocolVersion1(updateFile, waitTimeoutSec);
+        else
+          throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
+      }
+      catch (OperationCanceledException)
+      {
+        return BootloaderWorkflowResult.Cancel;
+      }
+      finally
+      {
+        Bootloader.Disconnect();
+      }
     }
 
     private BootloaderWorkflowResult UpdateProtocolVersion1(FirmwareUpdateFile updateFile, int connectionTimeout)
@@ -84,6 +113,9 @@ namespace PolyBootCore
       int i;
       for (i = 0; i < connectionIterations; i++)
       {
+        if (hasCancellation)
+          cancellationToken.ThrowIfCancellationRequested();
+
         if (InitializeConnection())
           break;
 
@@ -179,6 +211,9 @@ namespace PolyBootCore
       int i;
       for (i = 0; i < connectionIterations; i++)
       {
+        if (hasCancellation)
+          cancellationToken.ThrowIfCancellationRequested();
+
         if (InitializeConnection())
           break;
 

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading;
 using DiMoon.Protocols;
 using PolyBootCore.Connectors;
 using PolyBootCore.MISC;
@@ -8,6 +9,9 @@ namespace PolyBootCore.Bootloader.Transport
   public class BootloaderTransport : IBootloaderTransport
   {
     public int ResponseTimeout_ms { get; set; } = 500;
+
+    private CancellationToken cancellationToken;
+    private bool hasCancellation = false;
 
     private IDeviceConnector DeviceConnector;
 
@@ -24,6 +28,17 @@ namespace PolyBootCore.Bootloader.Transport
 
     public BootloaderTransport(IDeviceConnector deviceConnector)
     {
+      Init(deviceConnector);
+    }
+
+    public void SetCancellationToken(CancellationToken token)
+    {
+      cancellationToken = token;
+      hasCancellation = true;
+    }
+
+    private void Init(IDeviceConnector deviceConnector)
+    {
       DeviceConnector = deviceConnector;
       deviceConnector.ReadTimeout = 100;
       deviceConnector.WriteTimeout = ResponseTimeout_ms;
@@ -31,6 +46,9 @@ namespace PolyBootCore.Bootloader.Transport
 
     public bool Send(byte[] data)
     {
+      if (hasCancellation)
+        cancellationToken.ThrowIfCancellationRequested();
+
       if (DeviceConnector.IsConnected() == false)
         return false;
 
@@ -54,6 +72,9 @@ namespace PolyBootCore.Bootloader.Transport
 
     public byte[] Receive()
     {
+      if (hasCancellation)
+        cancellationToken.ThrowIfCancellationRequested();
+
       long start = Stopwatch.GetTimestamp();
 
       // Конвертируем миллисекунды в системные тики
@@ -61,6 +82,9 @@ namespace PolyBootCore.Bootloader.Transport
 
       while ((Stopwatch.GetTimestamp() - start) < timeoutTicks)
       {
+        if (hasCancellation)
+          cancellationToken.ThrowIfCancellationRequested();
+
         if (queue.Count > 0)
           return queue.Dequeue();
 
