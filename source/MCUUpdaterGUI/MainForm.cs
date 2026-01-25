@@ -94,6 +94,7 @@ namespace MCUUpdaterGUI
     private IBootloaderTransport CreateTransport()
     {
       var connector = new SerialPortConnector();
+      connector.ConnectionError += Connector_ConnectionError;
       connector.SetConnectionParams("COM1", 119200);
       var transport = new BootloaderTransport(connector)
       {
@@ -103,7 +104,10 @@ namespace MCUUpdaterGUI
       return transport;
     }
 
-
+    private void Connector_ConnectionError(object sender, string e)
+    {
+      AppendToLog(e);
+    }
 
     private void Bootloader_EraseProgress(int percent)
     {
