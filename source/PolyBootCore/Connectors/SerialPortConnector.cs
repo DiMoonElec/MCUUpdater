@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PolyBootCore.Connectors
 {
-  public class SerialPortConnector : IDeviceConnector
+  internal class SerialPortConnector : IDeviceConnector
   {
     private readonly SerialPort serialPort = new SerialPort();
     private Stream stream;

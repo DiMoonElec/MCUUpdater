@@ -7,7 +7,7 @@ namespace PolyBootCore.Connectors
   /// Интерфейс транспортного потока обмена данными
   /// с Bootloader-ом.
   /// </summary>
-  public interface IDeviceConnector
+  internal interface IDeviceConnector
   {
     int ReadTimeout { get; set; }
     int WriteTimeout { get; set; }

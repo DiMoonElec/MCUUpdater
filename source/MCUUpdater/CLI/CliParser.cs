@@ -142,7 +142,7 @@ namespace MCUUpdater.CLI
 
           case "-r":
           case "--response-timeout":
-            t.ResponseTimeoutSec = ParseInt(args, ref i);
+            t.ResponseTimeoutMs = ParseInt(args, ref i);
             break;
 
           default:
@@ -176,12 +176,12 @@ namespace MCUUpdater.CLI
 
           case "-t":
           case "--connect-timeout":
-            t.ConnectTimeoutSec = ParseInt(args, ref i);
+            t.ConnectTimeoutMs = ParseInt(args, ref i);
             break;
 
           case "-r":
           case "--response-timeout":
-            t.ResponseTimeoutSec = ParseInt(args, ref i);
+            t.ResponseTimeoutMs = ParseInt(args, ref i);
             break;
 
           default:
@@ -215,7 +215,7 @@ namespace MCUUpdater.CLI
 
           case "-r":
           case "--response-timeout":
-            t.ResponseTimeoutSec = ParseInt(args, ref i);
+            t.ResponseTimeoutMs = ParseInt(args, ref i);
             break;
 
           default:

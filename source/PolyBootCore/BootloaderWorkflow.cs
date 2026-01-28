@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using PolyBootCore.Bootloader;
-using PolyBootCore.Bootloader.Transport;
+using PolyBootCore.Transport;
 using PolyBootCore.UpdateFile;
 
 namespace PolyBootCore
@@ -41,17 +41,46 @@ namespace PolyBootCore
     private readonly CancellationToken cancellationToken;
     private readonly bool hasCancellation = false;
 
-    public BootloaderWorkflow(IBootloaderTransport transport)
+    private int connectionTimeout = 60;
+
+    public BootloaderWorkflow(ConnectionConfig config)
     {
-      Init(transport);
+      connectionTimeout = config.DeviceWaitTimeout;
+      Init(config.CreateTransport());
     }
 
-    public BootloaderWorkflow(IBootloaderTransport transport, CancellationToken token)
+    public BootloaderWorkflow(ConnectionConfig config, CancellationToken token)
     {
+      connectionTimeout = config.DeviceWaitTimeout;
+
+      var transport = config.CreateTransport();
       Init(transport);
       transport.SetCancellationToken(token);
       hasCancellation = true;
       cancellationToken = token;
+    }
+
+    public static string GetDescription(BootloaderWorkflowResult result)
+    {
+      switch (result)
+      {
+        case BootloaderWorkflowResult.OK:
+          return "Operation completed successfully";
+        case BootloaderWorkflowResult.ConnectionError:
+          return "Failed to connect to device";
+        case BootloaderWorkflowResult.ConnectionLost:
+          return "Connection to device lost";
+        case BootloaderWorkflowResult.ErasingError:
+          return "Error while erasing device memory";
+        case BootloaderWorkflowResult.IncompatibleDeviceError:
+          return "Device is incompatible";
+        case BootloaderWorkflowResult.UpdateError:
+          return "Firmware update failed";
+        case BootloaderWorkflowResult.Cancel:
+          return "Operation was canceled";
+        default:
+          return "Unknown result";
+      }
     }
 
     private void Init(IBootloaderTransport transport)
@@ -86,14 +115,14 @@ namespace PolyBootCore
     /// <param name="waitTimeoutSec">Тайм-аут на подключение к обновляемому устройству</param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public BootloaderWorkflowResult Update(FirmwareUpdateFile updateFile, int waitTimeoutSec)
+    public BootloaderWorkflowResult Update(FirmwareUpdateFile updateFile)
     {
       try
       {
         if (updateFile.ProtocolVersion == 0)
-          return UpdateProtocolVersion0(updateFile, waitTimeoutSec);
+          return UpdateProtocolVersion0(updateFile);
         else if (updateFile.ProtocolVersion == 1)
-          return UpdateProtocolVersion1(updateFile, waitTimeoutSec);
+          return UpdateProtocolVersion1(updateFile);
         else
           throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
       }
@@ -107,7 +136,7 @@ namespace PolyBootCore
       }
     }
 
-    private BootloaderWorkflowResult UpdateProtocolVersion1(FirmwareUpdateFile updateFile, int connectionTimeout)
+    private BootloaderWorkflowResult UpdateProtocolVersion1(FirmwareUpdateFile updateFile)
     {
       int connectionIterations = connectionTimeout * 2;
       int i;
@@ -205,7 +234,7 @@ namespace PolyBootCore
         return BootloaderWorkflowResult.ConnectionLost;
     }
 
-    private BootloaderWorkflowResult UpdateProtocolVersion0(FirmwareUpdateFile updateFile, int connectionTimeout)
+    private BootloaderWorkflowResult UpdateProtocolVersion0(FirmwareUpdateFile updateFile)
     {
       int connectionIterations = connectionTimeout * 2;
       int i;

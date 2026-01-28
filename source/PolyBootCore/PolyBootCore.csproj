@@ -47,6 +47,10 @@
     <Compile Include="BinexLib\Crc.cs" />
     <Compile Include="BootloaderWorkflow.cs" />
     <Compile Include="Bootloader\BootloaderProtocol.cs" />
+    <Compile Include="Config\ConnectionConfig.cs" />
+    <Compile Include="Config\RawTcpConnectionConfig.cs" />
+    <Compile Include="Config\SerialConnectionConfig.cs" />
+    <Compile Include="MISC\SetOnce.cs" />
     <Compile Include="Transport\BootloaderTransport.cs" />
     <Compile Include="Bootloader\IBootloaderProtocol.cs" />
     <Compile Include="Transport\IBootloaderTransport.cs" />

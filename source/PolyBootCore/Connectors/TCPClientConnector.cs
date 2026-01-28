@@ -3,7 +3,7 @@ using System.Net.Sockets;
 
 namespace PolyBootCore.Connectors
 {
-  public class TCPClientConnector : IDeviceConnector
+  internal class TCPClientConnector : IDeviceConnector
   {
     private TcpClient tcpClient;
     private NetworkStream netStream;

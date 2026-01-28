@@ -1,8 +1,8 @@
 ﻿using System.Threading;
 
-namespace PolyBootCore.Bootloader.Transport
+namespace PolyBootCore.Transport
 {
-  public interface IBootloaderTransport
+  internal interface IBootloaderTransport
   {
     int ResponseTimeout_ms { get; set; }
     void SetCancellationToken(CancellationToken token);

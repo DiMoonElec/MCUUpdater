@@ -56,6 +56,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserControls\MISC.cs" />
     <Compile Include="UserControls\TransportUI.cs">
       <SubType>UserControl</SubType>
     </Compile>

@@ -16,48 +16,57 @@ namespace PolyBootCore.UpdateFile
       if (!File.Exists(filePath))
         throw new FileNotFoundException("Update file not found", filePath);
 
-      string[] lines = File.ReadAllLines(filePath, Encoding.ASCII);
-
-      if (lines.Length == 0)
-        throw new InvalidDataException("Empty update file");
-
-      // ---------- Legacy формат ----------
-      if (!lines[0].StartsWith(HeaderPrefix, StringComparison.Ordinal))
+      try
       {
-        return new FirmwareUpdateFile(0, 0, null, lines);
+        string[] lines = File.ReadAllLines(filePath, Encoding.ASCII);
+
+        if (lines.Length == 0)
+          throw new InvalidDataException("Empty update file");
+
+        // ---------- Legacy формат ----------
+        if (!lines[0].StartsWith(HeaderPrefix, StringComparison.Ordinal))
+        {
+          return new FirmwareUpdateFile(0, 0, null, lines);
+        }
+
+        // ---------- Новый формат ----------
+        int protocolVersion;
+        int formatVersion;
+        ParseHeaderLine(lines[0], out protocolVersion, out formatVersion);
+
+        if (formatVersion != 1)
+          throw new NotSupportedException("Unsupported format version: " + formatVersion);
+
+        if (lines.Length < 3)
+          throw new InvalidDataException("Invalid file structure");
+
+        // Последняя строка — SHA256 в HEX
+        string shaHexLine = lines[lines.Length - 1];
+        byte[] expectedHash = ParseHex(shaHexLine);
+
+        // Проверяем SHA256
+        byte[] actualHash = ComputeSha256(lines, 0, lines.Length - 1);
+
+        if (!HashesEqual(expectedHash, actualHash))
+          throw new InvalidDataException("Firmware file is corrupted (SHA256 mismatch)");
+
+        // Header chunk
+        string headerChunk = lines[1];
+
+        // Data chunks
+        string[] dataChunks = lines
+            .Skip(2)
+            .Take(lines.Length - 3)
+            .ToArray();
+
+        return new FirmwareUpdateFile(protocolVersion, formatVersion, headerChunk, dataChunks);
       }
-
-      // ---------- Новый формат ----------
-      int protocolVersion;
-      int formatVersion;
-      ParseHeaderLine(lines[0], out protocolVersion, out formatVersion);
-
-      if (formatVersion != 1)
-        throw new NotSupportedException("Unsupported format version: " + formatVersion);
-
-      if (lines.Length < 3)
-        throw new InvalidDataException("Invalid file structure");
-
-      // Последняя строка — SHA256 в HEX
-      string shaHexLine = lines[lines.Length - 1];
-      byte[] expectedHash = ParseHex(shaHexLine);
-
-      // Проверяем SHA256
-      byte[] actualHash = ComputeSha256(lines, 0, lines.Length - 1);
-
-      if (!HashesEqual(expectedHash, actualHash))
-        throw new InvalidDataException("Firmware file is corrupted (SHA256 mismatch)");
-
-      // Header chunk
-      string headerChunk = lines[1];
-
-      // Data chunks
-      string[] dataChunks = lines
-          .Skip(2)
-          .Take(lines.Length - 3)
-          .ToArray();
-
-      return new FirmwareUpdateFile(protocolVersion, formatVersion, headerChunk, dataChunks);
+      catch (Exception ex)
+      {
+        throw new InvalidOperationException(
+          "The selected file is corrupted, has a newer unsupported format, or is not a valid firmware update file",
+        ex);
+      }
     }
 
     // ================= helpers =================

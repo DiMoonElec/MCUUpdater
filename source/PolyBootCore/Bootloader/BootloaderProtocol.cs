@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using PolyBootCore.Bootloader.Transport;
+using PolyBootCore.Transport;
 
 namespace PolyBootCore.Bootloader
 {

@@ -47,7 +47,7 @@
       // tableLayoutPanel1
       // 
       this.tableLayoutPanel1.ColumnCount = 2;
-      this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 144F));
+      this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 192F));
       this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
       this.tableLayoutPanel1.Controls.Add(this.label4, 0, 0);
       this.tableLayoutPanel1.Controls.Add(this.comboBoxTransport, 1, 0);
@@ -63,6 +63,7 @@
       this.tableLayoutPanel1.Controls.Add(this.label1, 0, 1);
       this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
       this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
+      this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.tableLayoutPanel1.Name = "tableLayoutPanel1";
       this.tableLayoutPanel1.RowCount = 7;
       this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -71,17 +72,18 @@
       this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
       this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
       this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-      this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-      this.tableLayoutPanel1.Size = new System.Drawing.Size(372, 199);
+      this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+      this.tableLayoutPanel1.Size = new System.Drawing.Size(496, 245);
       this.tableLayoutPanel1.TabIndex = 0;
       // 
       // label4
       // 
       this.label4.AutoSize = true;
       this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.label4.Location = new System.Drawing.Point(3, 0);
+      this.label4.Location = new System.Drawing.Point(4, 0);
+      this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.label4.Name = "label4";
-      this.label4.Size = new System.Drawing.Size(138, 27);
+      this.label4.Size = new System.Drawing.Size(184, 32);
       this.label4.TabIndex = 6;
       this.label4.Text = "Transport";
       this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -90,48 +92,55 @@
       // 
       this.comboBoxTransport.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
       this.comboBoxTransport.FormattingEnabled = true;
-      this.comboBoxTransport.Location = new System.Drawing.Point(147, 3);
+      this.comboBoxTransport.Location = new System.Drawing.Point(196, 4);
+      this.comboBoxTransport.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.comboBoxTransport.Name = "comboBoxTransport";
-      this.comboBoxTransport.Size = new System.Drawing.Size(191, 21);
+      this.comboBoxTransport.Size = new System.Drawing.Size(253, 24);
       this.comboBoxTransport.TabIndex = 0;
       this.comboBoxTransport.SelectedIndexChanged += new System.EventHandler(this.comboBoxTransport_SelectedIndexChanged);
       // 
       // textBoxConnectTimeout
       // 
-      this.textBoxConnectTimeout.Location = new System.Drawing.Point(147, 135);
+      this.textBoxConnectTimeout.Location = new System.Drawing.Point(196, 158);
+      this.textBoxConnectTimeout.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.textBoxConnectTimeout.Name = "textBoxConnectTimeout";
-      this.textBoxConnectTimeout.Size = new System.Drawing.Size(191, 20);
+      this.textBoxConnectTimeout.Size = new System.Drawing.Size(253, 22);
       this.textBoxConnectTimeout.TabIndex = 5;
       // 
       // textBoxRespTimeout
       // 
-      this.textBoxRespTimeout.Location = new System.Drawing.Point(147, 109);
+      this.textBoxRespTimeout.Location = new System.Drawing.Point(196, 128);
+      this.textBoxRespTimeout.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.textBoxRespTimeout.Name = "textBoxRespTimeout";
-      this.textBoxRespTimeout.Size = new System.Drawing.Size(191, 20);
+      this.textBoxRespTimeout.Size = new System.Drawing.Size(253, 22);
       this.textBoxRespTimeout.TabIndex = 4;
       // 
       // textBoxBaud_NetPort
       // 
-      this.textBoxBaud_NetPort.Location = new System.Drawing.Point(147, 83);
+      this.textBoxBaud_NetPort.Location = new System.Drawing.Point(196, 98);
+      this.textBoxBaud_NetPort.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.textBoxBaud_NetPort.Name = "textBoxBaud_NetPort";
-      this.textBoxBaud_NetPort.Size = new System.Drawing.Size(191, 20);
+      this.textBoxBaud_NetPort.Size = new System.Drawing.Size(253, 22);
       this.textBoxBaud_NetPort.TabIndex = 3;
       // 
       // comboBoxPort_Host
       // 
       this.comboBoxPort_Host.FormattingEnabled = true;
-      this.comboBoxPort_Host.Location = new System.Drawing.Point(147, 56);
+      this.comboBoxPort_Host.Location = new System.Drawing.Point(196, 66);
+      this.comboBoxPort_Host.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.comboBoxPort_Host.Name = "comboBoxPort_Host";
-      this.comboBoxPort_Host.Size = new System.Drawing.Size(191, 21);
+      this.comboBoxPort_Host.Size = new System.Drawing.Size(253, 24);
       this.comboBoxPort_Host.TabIndex = 2;
+      this.comboBoxPort_Host.DropDown += new System.EventHandler(this.comboBoxPort_Host_DropDown);
       // 
       // labelConnectTimeout
       // 
       this.labelConnectTimeout.AutoSize = true;
       this.labelConnectTimeout.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.labelConnectTimeout.Location = new System.Drawing.Point(3, 132);
+      this.labelConnectTimeout.Location = new System.Drawing.Point(4, 154);
+      this.labelConnectTimeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.labelConnectTimeout.Name = "labelConnectTimeout";
-      this.labelConnectTimeout.Size = new System.Drawing.Size(138, 26);
+      this.labelConnectTimeout.Size = new System.Drawing.Size(184, 30);
       this.labelConnectTimeout.TabIndex = 7;
       this.labelConnectTimeout.Text = "Connection timeout, ms";
       this.labelConnectTimeout.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -140,9 +149,10 @@
       // 
       this.labelRespTimeout.AutoSize = true;
       this.labelRespTimeout.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.labelRespTimeout.Location = new System.Drawing.Point(3, 106);
+      this.labelRespTimeout.Location = new System.Drawing.Point(4, 124);
+      this.labelRespTimeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.labelRespTimeout.Name = "labelRespTimeout";
-      this.labelRespTimeout.Size = new System.Drawing.Size(138, 26);
+      this.labelRespTimeout.Size = new System.Drawing.Size(184, 30);
       this.labelRespTimeout.TabIndex = 4;
       this.labelRespTimeout.Text = "Response timeout, ms";
       this.labelRespTimeout.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -151,27 +161,30 @@
       // 
       this.labelBaud_NetPort.AutoSize = true;
       this.labelBaud_NetPort.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.labelBaud_NetPort.Location = new System.Drawing.Point(3, 80);
+      this.labelBaud_NetPort.Location = new System.Drawing.Point(4, 94);
+      this.labelBaud_NetPort.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.labelBaud_NetPort.Name = "labelBaud_NetPort";
-      this.labelBaud_NetPort.Size = new System.Drawing.Size(138, 26);
+      this.labelBaud_NetPort.Size = new System.Drawing.Size(184, 30);
       this.labelBaud_NetPort.TabIndex = 2;
       this.labelBaud_NetPort.Text = "Baud";
       this.labelBaud_NetPort.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
       // textBoxDeviceWait
       // 
-      this.textBoxDeviceWait.Location = new System.Drawing.Point(147, 30);
+      this.textBoxDeviceWait.Location = new System.Drawing.Point(196, 36);
+      this.textBoxDeviceWait.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.textBoxDeviceWait.Name = "textBoxDeviceWait";
-      this.textBoxDeviceWait.Size = new System.Drawing.Size(191, 20);
+      this.textBoxDeviceWait.Size = new System.Drawing.Size(253, 22);
       this.textBoxDeviceWait.TabIndex = 1;
       // 
       // labelPort_Host
       // 
       this.labelPort_Host.AutoSize = true;
       this.labelPort_Host.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.labelPort_Host.Location = new System.Drawing.Point(3, 53);
+      this.labelPort_Host.Location = new System.Drawing.Point(4, 62);
+      this.labelPort_Host.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.labelPort_Host.Name = "labelPort_Host";
-      this.labelPort_Host.Size = new System.Drawing.Size(138, 27);
+      this.labelPort_Host.Size = new System.Drawing.Size(184, 32);
       this.labelPort_Host.TabIndex = 0;
       this.labelPort_Host.Text = "Port";
       this.labelPort_Host.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -180,20 +193,22 @@
       // 
       this.label1.AutoSize = true;
       this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
-      this.label1.Location = new System.Drawing.Point(3, 27);
+      this.label1.Location = new System.Drawing.Point(4, 32);
+      this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
       this.label1.Name = "label1";
-      this.label1.Size = new System.Drawing.Size(138, 26);
+      this.label1.Size = new System.Drawing.Size(184, 30);
       this.label1.TabIndex = 9;
       this.label1.Text = "Device Wait, sec";
       this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
       // TransportUI
       // 
-      this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+      this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.Controls.Add(this.tableLayoutPanel1);
+      this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
       this.Name = "TransportUI";
-      this.Size = new System.Drawing.Size(372, 199);
+      this.Size = new System.Drawing.Size(496, 245);
       this.tableLayoutPanel1.ResumeLayout(false);
       this.tableLayoutPanel1.PerformLayout();
       this.ResumeLayout(false);

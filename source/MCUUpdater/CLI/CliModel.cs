@@ -29,7 +29,7 @@
 
   public interface ICLITransport
   {
-    int ResponseTimeoutSec { get; set; }
+    int ResponseTimeoutMs { get; set; }
   }
 
   // ===== Serial-based =====
@@ -38,7 +38,7 @@
   {
     public string Port { get; set; }
     public int BaudRate { get; set; } = 115200;
-    public int ResponseTimeoutSec { get; set; } = 2;
+    public int ResponseTimeoutMs { get; set; } = 2000;
   }
 
   public class CLISerialTransport : CLISerialTransportBase
@@ -55,8 +55,8 @@
   {
     public string Host { get; set; }
     public int Port { get; set; }
-    public int ConnectTimeoutSec { get; set; } = 2;
-    public int ResponseTimeoutSec { get; set; } = 2;
+    public int ConnectTimeoutMs { get; set; } = 2000;
+    public int ResponseTimeoutMs { get; set; } = 2000;
   }
 
   public class CLIRawTcpTransport : CLITcpTransportBase
@@ -89,7 +89,7 @@
   {
     public string Host { get; set; }
     public int Port { get; set; }
-    public int ResponseTimeoutSec { get; set; } = 2;
+    public int ResponseTimeoutMs { get; set; } = 2000;
   }
 
   public class CLIRawUdpTransport : CLIUdpTransportBase

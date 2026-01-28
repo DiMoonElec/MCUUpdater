@@ -51,9 +51,10 @@ namespace MCUUpdater
 
     private static int RunUpdateCommand(CLIOptions options, CLIUpdateCommand updateCommand)
     {
-      var transport = BootloaderTransportFactory.Create(updateCommand.Transport);
-      
-      BootloaderWorkflow bootloaderWorkflow = new BootloaderWorkflow(transport);
+      var connectionConfig = BootloaderConnectionTransportFactory.Create(updateCommand.Transport);
+      connectionConfig.DeviceWaitTimeout = options.WaitTimeoutSec;
+
+      BootloaderWorkflow bootloaderWorkflow = new BootloaderWorkflow(connectionConfig);
 
       bootloaderWorkflow.EraseProgress += Bootloader_EraseProgress;
       bootloaderWorkflow.UserDataEraseProgress += Bootloader_UserDataEraseProgress;
@@ -65,7 +66,7 @@ namespace MCUUpdater
       var update_file = FirmwareUpdateParser.Parse(updateCommand.FirmwareFile);
       Console.WriteLine($"File loaded: Protocol Version {update_file.ProtocolVersion}, Format Version {update_file.FormatVersion}");
       Console.WriteLine("Starting firmware update...");
-      result = bootloaderWorkflow.Update(update_file, options.WaitTimeoutSec);
+      result = bootloaderWorkflow.Update(update_file);
       Console.WriteLine();
 
       switch (result)

@@ -43,7 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BootloaderTransportFactory.cs" />
+    <Compile Include="BootloaderConnectionTransportFactory.cs" />
     <Compile Include="CLI\CliModel.cs" />
     <Compile Include="CLI\CliParser.cs" />
     <Compile Include="Program.cs" />

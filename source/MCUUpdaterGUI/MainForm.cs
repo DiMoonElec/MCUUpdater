@@ -1,13 +1,10 @@
-﻿using System;
+﻿using PolyBootCore;
+using PolyBootCore.UpdateFile;
+using System;
 using System.Drawing;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using PolyBootCore;
-using PolyBootCore.Bootloader.Transport;
-using PolyBootCore.Connectors;
-using PolyBootCore.UpdateFile;
 
 namespace MCUUpdaterGUI
 {
@@ -16,7 +13,9 @@ namespace MCUUpdaterGUI
     static readonly Color buttonStartUpdateActive = Color.FromArgb(0, 192, 0);
     static readonly Color buttonAbortActive = Color.FromArgb(255, 128, 128);
 
-    static CancellationTokenSource cts = null;
+    private CancellationTokenSource cts = null;
+
+    private string selectedUpdateFilePath = null;
 
     public MainForm()
     {
@@ -25,11 +24,37 @@ namespace MCUUpdaterGUI
 
     private void buttonStartUpdate_Click(object sender, EventArgs e)
     {
-      cts = new CancellationTokenSource();
+      if (selectedUpdateFilePath == null)
+      {
+        MessageBox.Show("Update file is not selected", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return;
+      }
 
-      var transport = CreateTransport();
-      var bootloaderWorkflow = new BootloaderWorkflow(transport, cts.Token);
-      var updateFile = FirmwareUpdateParser.Parse("testfile.xbin");
+
+      var enteredConfig = transportUI1.GetEnteredConfig();
+
+      if (enteredConfig == null)
+      {
+        MessageBox.Show("One or more connection parameters have an invalid data format", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return;
+      }
+
+      FirmwareUpdateFile updateFile = null;
+
+      try
+      {
+        updateFile = FirmwareUpdateParser.Parse(selectedUpdateFilePath);
+      }
+      catch (Exception ex)
+      {
+        AppendErrorToLog(ex.Message);
+        return;
+      }
+
+      AppendInfoToLog("Start of update");
+
+      cts = new CancellationTokenSource();
+      var bootloaderWorkflow = new BootloaderWorkflow(enteredConfig, cts.Token);
 
       bootloaderWorkflow.EraseProgress += Bootloader_EraseProgress;
       bootloaderWorkflow.UploadProgress += Bootloader_UploadProgress;
@@ -39,21 +64,36 @@ namespace MCUUpdaterGUI
       {
         try
         {
-          var result = bootloaderWorkflow.Update(updateFile, 600);
-          AppendToLog($"Result: {result.ToString()}");
+          var result = bootloaderWorkflow.Update(updateFile);
 
-          this.InvokeIfRequired(() => UIStateReady());
+          string description = BootloaderWorkflow.GetDescription(result);
+          switch (result)
+          {
+            case BootloaderWorkflowResult.ConnectionError:
+            case BootloaderWorkflowResult.ConnectionLost:
+            case BootloaderWorkflowResult.ErasingError:
+            case BootloaderWorkflowResult.IncompatibleDeviceError:
+            case BootloaderWorkflowResult.UpdateError:
+              AppendErrorToLog(description);
+              break;
+
+            default:
+              AppendInfoToLog(description);
+              break;
+          }
         }
-        catch(Exception ex) 
+        catch (Exception ex)
         {
-          AppendToLog($"Error: {ex.Message}");
+          AppendErrorToLog(ex.Message);
+        }
+        finally
+        {
+          this.InvokeIfRequired(() => UIStateReady());
         }
       });
 
 
       UIStateUploading();
-
-
     }
 
     private void buttonAbort_Click(object sender, EventArgs e)
@@ -64,7 +104,6 @@ namespace MCUUpdaterGUI
       buttonAbort.Enabled = false;
       buttonAbort.BackColor = SystemColors.Control;
     }
-
 
     private void UIStateUploading()
     {
@@ -90,20 +129,6 @@ namespace MCUUpdaterGUI
       UIStateReady();
     }
 
-
-    private IBootloaderTransport CreateTransport()
-    {
-      var connector = new SerialPortConnector();
-      connector.ConnectionError += Connector_ConnectionError;
-      connector.SetConnectionParams("COM1", 119200);
-      var transport = new BootloaderTransport(connector)
-      {
-        ResponseTimeout_ms = 2000
-      };
-
-      return transport;
-    }
-
     private void Connector_ConnectionError(object sender, string e)
     {
       AppendToLog(e);
@@ -122,9 +147,45 @@ namespace MCUUpdaterGUI
     {
     }
 
+    private void AppendInfoToLog(string message)
+    {
+      AppendToLog(message);
+    }
+
+    private void AppendErrorToLog(string message)
+    {
+      AppendToLog("[ERROR] " + message);
+    }
+
     private void AppendToLog(string message)
     {
-      this.InvokeIfRequired(() => textBoxLog.Text += message + "\r\n");
+      this.InvokeIfRequired(() =>
+      {
+        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        textBoxLog.Text += $">:[{timestamp}] {message}\r\n";
+
+        // Прокрутка к последней строке без установки фокуса
+        textBoxLog.SelectionStart = textBoxLog.TextLength;
+        textBoxLog.SelectionLength = 0;
+        textBoxLog.ScrollToCaret();
+      });
+    }
+
+    private void buttonSelectFile_Click(object sender, EventArgs e)
+    {
+      using (OpenFileDialog openFileDialog = new OpenFileDialog())
+      {
+        openFileDialog.Title = "Select update file";
+        openFileDialog.Filter = "Update files (*.xbin)|*.xbin|All files (*.*)|*.*";
+        openFileDialog.FilterIndex = 1;
+        openFileDialog.RestoreDirectory = true;
+
+        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        {
+          selectedUpdateFilePath = openFileDialog.FileName;
+          textBoxSelectedFile.Text = selectedUpdateFilePath;
+        }
+      }
     }
   }
 }
