@@ -1,4 +1,5 @@
-﻿using PolyBootCore;
+﻿using MCUUpdaterGUI.Settings;
+using PolyBootCore;
 using PolyBootCore.UpdateFile;
 using System;
 using System.Drawing;
@@ -17,9 +18,18 @@ namespace MCUUpdaterGUI
 
     private string selectedUpdateFilePath = null;
 
+    private AppSettings appSettings = null;
     public MainForm()
     {
       InitializeComponent();
+      appSettings = AppSettings.Load();
+      transportUI1.Init(appSettings.TransportUISettings);
+    }
+
+    private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+    {
+      appSettings.TransportUISettings = transportUI1.GetSettings();
+      AppSettings.Save(appSettings);
     }
 
     private void buttonStartUpdate_Click(object sender, EventArgs e)

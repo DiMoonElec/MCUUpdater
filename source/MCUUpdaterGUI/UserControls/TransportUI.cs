@@ -4,10 +4,37 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MCUUpdaterGUI
 {
+  [Serializable]
+  public class TransportUISettings
+  {
+    public int SettingsVersion { get; set; } = 1;
+    public int SelectedTransportId { get; set; } = 0;
+    public TransportUISerialSettings SerialSettings { get; set; } = new TransportUISerialSettings();
+    public TransportUIRawTCPSettings RawTCPSettings { get; set; } = new TransportUIRawTCPSettings();
+  }
+
+  [Serializable]
+  public class TransportUISerialSettings
+  {
+    public int DeviceWaitTimeout { get; set; } = ConnectionConfig.DefaultDeviceWaitTimeoutSec;
+    public int ResponseTimeout { get; set; } = ConnectionConfig.DefaultResponseTimeoutMs;
+    public string ComPort { get; set; } = "COM1";
+    public int BaudRate { get; set; } = SerialConnectionConfig.DefaultBaudRate;
+  }
+
+  [Serializable]
+  public class TransportUIRawTCPSettings
+  {
+    public int DeviceWaitTimeout { get; set; } = ConnectionConfig.DefaultDeviceWaitTimeoutSec;
+    public int ResponseTimeout { get; set; } = ConnectionConfig.DefaultResponseTimeoutMs;
+    public string Host { get; set; } = "localhost";
+    public int Port { get; set; } = RawTcpConnectionConfig.DefaultPort;
+    public int ConnectTimeout { get; set; } = RawTcpConnectionConfig.DefaultConnectTimeoutMs;
+  }
+
   public partial class TransportUI : UserControl
   {
     abstract class Transport
@@ -43,36 +70,11 @@ namespace MCUUpdaterGUI
       }
     }
 
+    private TransportUISettings UISettings;
+
     public TransportUI()
     {
       InitializeComponent();
-      Init();
-    }
-
-    private void Init()
-    {
-      var transports = new List<Transport>
-      {
-        new SerialTransport(0) {
-          DeviceWait = ConnectionConfig.DefaultDeviceWaitTimeoutSec.ToString(),
-          RespTimeout = ConnectionConfig.DefaultResponseTimeoutMs.ToString(),
-          PortName = "COM1",
-          Baud = SerialConnectionConfig.DefaultBaudRate.ToString(),
-        },
-
-        new RawTCPTransport(1)
-        {
-          DeviceWait = ConnectionConfig.DefaultDeviceWaitTimeoutSec.ToString(),
-          RespTimeout = ConnectionConfig.DefaultResponseTimeoutMs.ToString(),
-          Host = "localhost",
-          Port = RawTcpConnectionConfig.DefaultPort.ToString(),
-          ConnectionTimeout = RawTcpConnectionConfig.DefaultConnectTimeoutMs.ToString(),
-        }
-      };
-
-      comboBoxTransport.DataSource = transports;
-      comboBoxTransport.DisplayMember = "Name";
-      comboBoxTransport.ValueMember = "Id";
 
       comboBoxPort_Host.TextChanged += Control_TextChanged;
       textBoxDeviceWait.TextChanged += Control_TextChanged;
@@ -81,14 +83,83 @@ namespace MCUUpdaterGUI
       textBoxConnectTimeout.TextChanged += Control_TextChanged;
     }
 
+    public void Init(TransportUISettings settings = null)
+    {
+      if (settings == null)
+        UISettings = new TransportUISettings();
+      else
+        UISettings = settings;
+
+      var transports = new List<Transport>()
+      {
+        new SerialTransport(0)
+        {
+          DeviceWait = UISettings.SerialSettings.DeviceWaitTimeout.ToString(),
+          RespTimeout = UISettings.SerialSettings.ResponseTimeout.ToString(),
+          PortName = UISettings.SerialSettings.ComPort,
+          Baud = UISettings.SerialSettings.BaudRate.ToString(),
+        },
+
+        new RawTCPTransport(1)
+        {
+          DeviceWait = UISettings.RawTCPSettings.DeviceWaitTimeout.ToString(),
+          RespTimeout = UISettings.RawTCPSettings.ResponseTimeout.ToString(),
+          Host = UISettings.RawTCPSettings.Host,
+          Port = UISettings.RawTCPSettings.Port.ToString(),
+          ConnectionTimeout = UISettings.RawTCPSettings.ConnectTimeout.ToString(),
+        }
+      };
+
+      comboBoxTransport.DataSource = transports;
+      comboBoxTransport.DisplayMember = "Name";
+      comboBoxTransport.ValueMember = "Id";
+      comboBoxTransport.SelectedValue = UISettings.SelectedTransportId;
+    }
+
     public ConnectionConfig GetEnteredConfig()
     {
+      if (comboBoxTransport.SelectedItem is Transport transport)
+        return GetConfig(transport);
+
+      return null;
+    }
+
+    public TransportUISettings GetSettings()
+    {
+      var config = GetEnteredConfig();
+
+      if (config != null)
+      {
+        if (config is SerialConnectionConfig serial)
+        {
+          UISettings.SerialSettings.DeviceWaitTimeout = serial.DeviceWaitTimeout;
+          UISettings.SerialSettings.ResponseTimeout = serial.ResponseTimeout;
+          UISettings.SerialSettings.ComPort = serial.ComPort;
+          UISettings.SerialSettings.BaudRate = serial.BaudRate;
+        }
+        else if (config is RawTcpConnectionConfig rawTcp)
+        {
+          UISettings.RawTCPSettings.DeviceWaitTimeout = rawTcp.DeviceWaitTimeout;
+          UISettings.RawTCPSettings.ResponseTimeout = rawTcp.ResponseTimeout;
+          UISettings.RawTCPSettings.Host = rawTcp.Host;
+          UISettings.RawTCPSettings.Port = rawTcp.Port;
+          UISettings.RawTCPSettings.ConnectTimeout = rawTcp.ConnectTimeout;
+        }
+      }
+
+      UISettings.SelectedTransportId = ((Transport)comboBoxTransport.SelectedItem).Id;
+      return UISettings;
+    }
+
+    private ConnectionConfig GetConfig(Transport transport)
+    {
       ConnectionConfig config = null;
-      if (comboBoxTransport.SelectedItem is SerialTransport serialTransport)
+
+      if (transport is SerialTransport serialTransport)
       {
         config = ParseShowSerialTransport(serialTransport);
       }
-      else if (comboBoxTransport.SelectedItem is RawTCPTransport rawTcpTransport)
+      else if (transport is RawTCPTransport rawTcpTransport)
       {
         config = ParseShowRawTcpTransport(rawTcpTransport);
       }
@@ -122,7 +193,7 @@ namespace MCUUpdaterGUI
       return config;
     }
 
-    private ConnectionConfig ParseShowRawTcpTransport(RawTCPTransport rawTcpTransport)
+    private RawTcpConnectionConfig ParseShowRawTcpTransport(RawTCPTransport rawTcpTransport)
     {
       bool isOK = true;
 
@@ -160,7 +231,7 @@ namespace MCUUpdaterGUI
       };
     }
 
-    private ConnectionConfig ParseShowSerialTransport(SerialTransport serialTransport)
+    private SerialConnectionConfig ParseShowSerialTransport(SerialTransport serialTransport)
     {
       bool isOK = true;
 
@@ -169,7 +240,7 @@ namespace MCUUpdaterGUI
 
       ComPort = comboBoxPort_Host.Text;
 
-      if(comboBoxPort_Host.Text == null || comboBoxPort_Host.Text == "")
+      if (comboBoxPort_Host.Text == null || comboBoxPort_Host.Text == "")
       {
         FieldMarkError(comboBoxPort_Host);
         isOK = false;
@@ -207,7 +278,7 @@ namespace MCUUpdaterGUI
 
     private void comboBoxPort_Host_DropDown(object sender, EventArgs e)
     {
-      if(comboBoxTransport.SelectedItem is SerialTransport)
+      if (comboBoxTransport.SelectedItem is SerialTransport)
       {
         var ports = MISC.GetComPorts();
         comboBoxPort_Host.Items.Clear();
@@ -242,7 +313,6 @@ namespace MCUUpdaterGUI
 
       textBoxRespTimeout.DataBindings.Clear();
       textBoxRespTimeout.DataBindings.Add("Text", transport, nameof(transport.RespTimeout), false, DataSourceUpdateMode.OnPropertyChanged);
-
     }
 
     private void ShowRawTcpTransport(RawTCPTransport transport)

@@ -31,6 +31,7 @@
       this.groupboxConnection = new System.Windows.Forms.GroupBox();
       this.buttonAbort = new System.Windows.Forms.Button();
       this.buttonStartUpdate = new System.Windows.Forms.Button();
+      this.transportUI1 = new MCUUpdaterGUI.TransportUI();
       this.groupBox2 = new System.Windows.Forms.GroupBox();
       this.buttonSelectFile = new System.Windows.Forms.Button();
       this.textBoxSelectedFile = new System.Windows.Forms.TextBox();
@@ -38,7 +39,6 @@
       this.labelProgressBar = new System.Windows.Forms.ToolStripStatusLabel();
       this.progressBarProgress = new System.Windows.Forms.ToolStripProgressBar();
       this.logRichTextBox = new MCUUpdaterGUI.UserControls.LogRichTextBox();
-      this.transportUI1 = new MCUUpdaterGUI.TransportUI();
       this.groupboxConnection.SuspendLayout();
       this.groupBox2.SuspendLayout();
       this.statusStrip1.SuspendLayout();
@@ -83,6 +83,14 @@
       this.buttonStartUpdate.Text = "START\r\nUPDATE";
       this.buttonStartUpdate.UseVisualStyleBackColor = false;
       this.buttonStartUpdate.Click += new System.EventHandler(this.buttonStartUpdate_Click);
+      // 
+      // transportUI1
+      // 
+      this.transportUI1.Location = new System.Drawing.Point(8, 20);
+      this.transportUI1.Margin = new System.Windows.Forms.Padding(8, 7, 8, 7);
+      this.transportUI1.Name = "transportUI1";
+      this.transportUI1.Size = new System.Drawing.Size(500, 238);
+      this.transportUI1.TabIndex = 1;
       // 
       // groupBox2
       // 
@@ -166,14 +174,6 @@
       this.logRichTextBox.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
       this.logRichTextBox.WarningColor = System.Drawing.Color.DarkOrange;
       // 
-      // transportUI1
-      // 
-      this.transportUI1.Location = new System.Drawing.Point(8, 20);
-      this.transportUI1.Margin = new System.Windows.Forms.Padding(8, 7, 8, 7);
-      this.transportUI1.Name = "transportUI1";
-      this.transportUI1.Size = new System.Drawing.Size(500, 238);
-      this.transportUI1.TabIndex = 1;
-      // 
       // MainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -189,6 +189,7 @@
       this.Name = "MainForm";
       this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
       this.Text = "Form1";
+      this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
       this.Load += new System.EventHandler(this.MainForm_Load);
       this.groupboxConnection.ResumeLayout(false);
       this.groupBox2.ResumeLayout(false);
