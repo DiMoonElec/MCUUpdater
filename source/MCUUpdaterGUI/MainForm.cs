@@ -30,7 +30,6 @@ namespace MCUUpdaterGUI
         return;
       }
 
-
       var enteredConfig = transportUI1.GetEnteredConfig();
 
       if (enteredConfig == null)
@@ -56,9 +55,13 @@ namespace MCUUpdaterGUI
       cts = new CancellationTokenSource();
       var bootloaderWorkflow = new BootloaderWorkflow(enteredConfig, cts.Token);
 
-      bootloaderWorkflow.EraseProgress += Bootloader_EraseProgress;
-      bootloaderWorkflow.UploadProgress += Bootloader_UploadProgress;
-      bootloaderWorkflow.UploadEnd += Bootloader_UploadEnd;
+      bootloaderWorkflow.EraseBegin += BootloaderWorkflow_EraseBegin;
+      bootloaderWorkflow.EraseProgress += BootloaderWorkflow_EraseProgress;
+      bootloaderWorkflow.EraseEnd += BootloaderWorkflow_EraseEnd;
+
+      bootloaderWorkflow.UploadBegin += BootloaderWorkflow_UploadBegin;
+      bootloaderWorkflow.UploadProgress += BootloaderWorkflow_UploadProgress;
+      bootloaderWorkflow.UploadEnd += BootloaderWorkflow_UploadEnd;
 
       Task.Run(() =>
       {
@@ -92,8 +95,40 @@ namespace MCUUpdaterGUI
         }
       });
 
-
       UIStateUploading();
+    }
+
+    private void BootloaderWorkflow_EraseBegin()
+    {
+      AppendInfoToLog("Flash erase start");
+      SetProgressBarLabel(" Erase");
+    }
+
+    private void BootloaderWorkflow_EraseProgress(int percent)
+    {
+      SetProgressBar(percent);
+    }
+
+    private void BootloaderWorkflow_EraseEnd()
+    {
+      AppendInfoToLog("Flash erase complete");
+    }
+
+    private void BootloaderWorkflow_UploadBegin()
+    {
+      AppendInfoToLog("Upload start");
+      SetProgressBarLabel("Upload");
+    }
+
+    private void BootloaderWorkflow_UploadProgress(int percent)
+    {
+      SetProgressBar(percent);
+    }
+
+    private void BootloaderWorkflow_UploadEnd()
+    {
+      AppendInfoToLog("Upload complete");
+      SetProgressBarLabel("Ready");
     }
 
     private void buttonAbort_Click(object sender, EventArgs e)
@@ -131,44 +166,27 @@ namespace MCUUpdaterGUI
 
     private void Connector_ConnectionError(object sender, string e)
     {
-      AppendToLog(e);
+      //AppendToLog(e);
     }
 
-    private void Bootloader_EraseProgress(int percent)
+    private void SetProgressBar(int percent)
     {
       this.InvokeIfRequired(() => progressBarProgress.Value = percent);
     }
 
-    private void Bootloader_UploadProgress(int percent)
+    private void SetProgressBarLabel(string str)
     {
-    }
-
-    private void Bootloader_UploadEnd()
-    {
+      this.InvokeIfRequired(() => labelProgressBar.Text = str);
     }
 
     private void AppendInfoToLog(string message)
     {
-      AppendToLog(message);
+      this.InvokeIfRequired(() => logRichTextBox.LogInfo(message));
     }
 
     private void AppendErrorToLog(string message)
     {
-      AppendToLog("[ERROR] " + message);
-    }
-
-    private void AppendToLog(string message)
-    {
-      this.InvokeIfRequired(() =>
-      {
-        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        textBoxLog.Text += $">:[{timestamp}] {message}\r\n";
-
-        // Прокрутка к последней строке без установки фокуса
-        textBoxLog.SelectionStart = textBoxLog.TextLength;
-        textBoxLog.SelectionLength = 0;
-        textBoxLog.ScrollToCaret();
-      });
+      this.InvokeIfRequired(() => logRichTextBox.LogError(message));
     }
 
     private void buttonSelectFile_Click(object sender, EventArgs e)

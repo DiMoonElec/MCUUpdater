@@ -31,15 +31,14 @@
       this.groupboxConnection = new System.Windows.Forms.GroupBox();
       this.buttonAbort = new System.Windows.Forms.Button();
       this.buttonStartUpdate = new System.Windows.Forms.Button();
-      this.transportUI1 = new MCUUpdaterGUI.TransportUI();
       this.groupBox2 = new System.Windows.Forms.GroupBox();
       this.buttonSelectFile = new System.Windows.Forms.Button();
       this.textBoxSelectedFile = new System.Windows.Forms.TextBox();
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-      this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-      this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+      this.labelProgressBar = new System.Windows.Forms.ToolStripStatusLabel();
       this.progressBarProgress = new System.Windows.Forms.ToolStripProgressBar();
-      this.textBoxLog = new System.Windows.Forms.TextBox();
+      this.logRichTextBox = new MCUUpdaterGUI.UserControls.LogRichTextBox();
+      this.transportUI1 = new MCUUpdaterGUI.TransportUI();
       this.groupboxConnection.SuspendLayout();
       this.groupBox2.SuspendLayout();
       this.statusStrip1.SuspendLayout();
@@ -85,14 +84,6 @@
       this.buttonStartUpdate.UseVisualStyleBackColor = false;
       this.buttonStartUpdate.Click += new System.EventHandler(this.buttonStartUpdate_Click);
       // 
-      // transportUI1
-      // 
-      this.transportUI1.Location = new System.Drawing.Point(8, 20);
-      this.transportUI1.Margin = new System.Windows.Forms.Padding(8, 7, 8, 7);
-      this.transportUI1.Name = "transportUI1";
-      this.transportUI1.Size = new System.Drawing.Size(500, 238);
-      this.transportUI1.TabIndex = 1;
-      // 
       // groupBox2
       // 
       this.groupBox2.Controls.Add(this.buttonSelectFile);
@@ -131,8 +122,7 @@
       // 
       this.statusStrip1.ImageScalingSize = new System.Drawing.Size(28, 28);
       this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel1,
-            this.toolStripStatusLabel2,
+            this.labelProgressBar,
             this.progressBarProgress});
       this.statusStrip1.Location = new System.Drawing.Point(0, 580);
       this.statusStrip1.Name = "statusStrip1";
@@ -142,42 +132,54 @@
       this.statusStrip1.TabIndex = 4;
       this.statusStrip1.Text = "statusStrip1";
       // 
-      // toolStripStatusLabel1
+      // labelProgressBar
       // 
-      this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-      this.toolStripStatusLabel1.Size = new System.Drawing.Size(151, 22);
-      this.toolStripStatusLabel1.Text = "toolStripStatusLabel1";
-      // 
-      // toolStripStatusLabel2
-      // 
-      this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-      this.toolStripStatusLabel2.Size = new System.Drawing.Size(151, 22);
-      this.toolStripStatusLabel2.Text = "toolStripStatusLabel2";
+      this.labelProgressBar.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+      this.labelProgressBar.Name = "labelProgressBar";
+      this.labelProgressBar.Size = new System.Drawing.Size(48, 22);
+      this.labelProgressBar.Text = "Ready";
+      this.labelProgressBar.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
       // progressBarProgress
       // 
       this.progressBarProgress.Name = "progressBarProgress";
       this.progressBarProgress.Size = new System.Drawing.Size(267, 20);
       // 
-      // textBoxLog
+      // logRichTextBox
       // 
-      this.textBoxLog.BackColor = System.Drawing.Color.White;
-      this.textBoxLog.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-      this.textBoxLog.Location = new System.Drawing.Point(16, 363);
-      this.textBoxLog.Margin = new System.Windows.Forms.Padding(4);
-      this.textBoxLog.Multiline = true;
-      this.textBoxLog.Name = "textBoxLog";
-      this.textBoxLog.ReadOnly = true;
-      this.textBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-      this.textBoxLog.Size = new System.Drawing.Size(696, 211);
-      this.textBoxLog.TabIndex = 5;
+      this.logRichTextBox.BackColor = System.Drawing.SystemColors.Window;
+      this.logRichTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+      this.logRichTextBox.DebugColor = System.Drawing.Color.Gray;
+      this.logRichTextBox.ErrorColor = System.Drawing.Color.DarkRed;
+      this.logRichTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
+      this.logRichTextBox.InfoColor = System.Drawing.Color.SteelBlue;
+      this.logRichTextBox.Location = new System.Drawing.Point(16, 363);
+      this.logRichTextBox.Margin = new System.Windows.Forms.Padding(4);
+      this.logRichTextBox.MaxLines = 100;
+      this.logRichTextBox.Name = "logRichTextBox";
+      this.logRichTextBox.ReadOnly = true;
+      this.logRichTextBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+      this.logRichTextBox.Size = new System.Drawing.Size(696, 211);
+      this.logRichTextBox.TabIndex = 5;
+      this.logRichTextBox.Text = "";
+      this.logRichTextBox.TimestampColor = System.Drawing.Color.DarkGray;
+      this.logRichTextBox.TimestampFormat = "yyyy-MM-dd HH:mm:ss";
+      this.logRichTextBox.WarningColor = System.Drawing.Color.DarkOrange;
+      // 
+      // transportUI1
+      // 
+      this.transportUI1.Location = new System.Drawing.Point(8, 20);
+      this.transportUI1.Margin = new System.Windows.Forms.Padding(8, 7, 8, 7);
+      this.transportUI1.Name = "transportUI1";
+      this.transportUI1.Size = new System.Drawing.Size(500, 238);
+      this.transportUI1.TabIndex = 1;
       // 
       // MainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.ClientSize = new System.Drawing.Size(729, 608);
-      this.Controls.Add(this.textBoxLog);
+      this.Controls.Add(this.logRichTextBox);
       this.Controls.Add(this.statusStrip1);
       this.Controls.Add(this.groupBox2);
       this.Controls.Add(this.groupboxConnection);
@@ -207,10 +209,9 @@
     private System.Windows.Forms.Button buttonStartUpdate;
     private System.Windows.Forms.Button buttonAbort;
     private System.Windows.Forms.StatusStrip statusStrip1;
-    private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-    private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
+    private System.Windows.Forms.ToolStripStatusLabel labelProgressBar;
     private System.Windows.Forms.ToolStripProgressBar progressBarProgress;
-    private System.Windows.Forms.TextBox textBoxLog;
+    private UserControls.LogRichTextBox logRichTextBox;
   }
 }
 
