@@ -218,5 +218,17 @@ namespace MCUUpdaterGUI
         }
       }
     }
+
+    private void MainForm_HelpRequested(object sender, HelpEventArgs hlpevent)
+    {
+      string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+      string message = $"MCU Updater GUI Utility {Environment.NewLine}";
+      message += $"Version {version}{Environment.NewLine}";
+      message += Environment.NewLine;
+      message += $"Author: DiMoon Electronics{Environment.NewLine}";
+      message += $"Website: dimoon.ru{Environment.NewLine}";
+
+      MessageBox.Show(message, "About", MessageBoxButtons.OK, MessageBoxIcon.None);
+    }
   }
 }

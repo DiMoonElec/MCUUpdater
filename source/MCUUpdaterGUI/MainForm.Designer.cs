@@ -182,6 +182,7 @@
       this.Text = "Form1";
       this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
       this.Load += new System.EventHandler(this.MainForm_Load);
+      this.HelpRequested += new System.Windows.Forms.HelpEventHandler(this.MainForm_HelpRequested);
       this.groupboxConnection.ResumeLayout(false);
       this.groupBox2.ResumeLayout(false);
       this.groupBox2.PerformLayout();
