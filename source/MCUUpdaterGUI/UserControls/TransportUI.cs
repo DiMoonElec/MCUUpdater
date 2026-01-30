@@ -278,10 +278,11 @@ namespace MCUUpdaterGUI
 
     private void comboBoxPort_Host_DropDown(object sender, EventArgs e)
     {
+      comboBoxPort_Host.Items.Clear();
+
       if (comboBoxTransport.SelectedItem is SerialTransport)
       {
         var ports = MISC.GetComPorts();
-        comboBoxPort_Host.Items.Clear();
         if (ports != null)
         {
           comboBoxPort_Host.Items.AddRange(ports);
