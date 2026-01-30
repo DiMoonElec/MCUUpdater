@@ -3,6 +3,7 @@ using PolyBootCore;
 using PolyBootCore.UpdateFile;
 using System;
 using System.Drawing;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -170,7 +171,9 @@ namespace MCUUpdaterGUI
 
     private void MainForm_Load(object sender, EventArgs e)
     {
-      this.Text = "MCUUpdater GUI v0.3.0";
+      string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+      this.Text = $"MCUUpdater GUI v{version}";
       UIStateReady();
     }
 

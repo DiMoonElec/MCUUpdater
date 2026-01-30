@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "MCUUpdater"
-#define MyAppVersion "0.2.0"
+#define MyAppVersion GetFileVersion("ReleaseCombined\MCUUpdaterGUI.exe")
 #define MyAppPublisher "DiMoon Electronics"
 #define MyAppURL "https://dimoon.ru/"
 #define MyAppExeName "bin/MCUUpdater.exe"
@@ -33,9 +33,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Files]
-Source: "..\source\MCUUpdater\bin\Release\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ReleaseCombined\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\LICENSE"; DestDir: "{app}\"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+
+[Icons]
+Name: "{commondesktop}\MCU Updater Utility"; Filename: "{app}\bin\MCUUpdaterGUI.exe"; IconFilename: "{app}\bin\MCUUpdaterGUI.exe"
+Name: "{group}\MCU Updater Utility"; Filename: "{app}\bin\MCUUpdaterGUI.exe"; WorkingDir: "{app}"
 
 [Code]
 #include "EnvPathUtils.pas"
