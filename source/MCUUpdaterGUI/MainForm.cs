@@ -123,6 +123,7 @@ namespace MCUUpdaterGUI
     private void BootloaderWorkflow_EraseEnd()
     {
       AppendInfoToLog("Flash erase complete");
+      SetProgressBar(100);
     }
 
     private void BootloaderWorkflow_UploadBegin()
@@ -140,6 +141,7 @@ namespace MCUUpdaterGUI
     {
       AppendInfoToLog("Upload complete");
       SetProgressBarLabel("Ready");
+      SetProgressBar(100);
     }
 
     private void buttonAbort_Click(object sender, EventArgs e)
