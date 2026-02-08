@@ -83,7 +83,7 @@ MCUUpdater update -f fw.xbin serial -p COM7 -b 115200
 ```
 
 ```bash
-MCUUpdater update -f fw.xbin raw-udp -H 10.0.0.5 -p 7777
+MCUUpdater update -f fw.xbin raw-tcp -H 10.0.0.5 -p 7777
 ```
 
 

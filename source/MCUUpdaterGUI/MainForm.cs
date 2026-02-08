@@ -83,14 +83,18 @@ namespace MCUUpdaterGUI
           string description = BootloaderWorkflow.GetDescription(result);
           switch (result)
           {
+            // Error cases
             case BootloaderWorkflowResult.ConnectionError:
             case BootloaderWorkflowResult.ConnectionLost:
             case BootloaderWorkflowResult.ErasingError:
             case BootloaderWorkflowResult.IncompatibleDeviceError:
             case BootloaderWorkflowResult.UpdateError:
+              SetProgressBar(0);
+              SetProgressBarLabel(" Error");
               AppendErrorToLog(description);
               break;
 
+            // ОК cases
             default:
               AppendInfoToLog(description);
               break;
