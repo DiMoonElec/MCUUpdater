@@ -238,7 +238,15 @@ namespace MCUUpdaterGUI
       string ComPort;
       int BaudRate;
 
-      ComPort = comboBoxPort_Host.Text;
+      if (comboBoxPort_Host.SelectedItem != null
+        && comboBoxPort_Host.SelectedItem is SerialPortName serialPortName)
+      {
+        ComPort = serialPortName.Name;
+      }
+      else
+      {
+        ComPort = comboBoxPort_Host.Text;
+      }
 
       if (comboBoxPort_Host.Text == null || comboBoxPort_Host.Text == "")
       {
@@ -282,7 +290,8 @@ namespace MCUUpdaterGUI
 
       if (comboBoxTransport.SelectedItem is SerialTransport)
       {
-        var ports = MISC.GetComPorts();
+        //var ports = MISC.GetComPorts();
+        var ports = MISC.GetAvailablePorts();
         if (ports != null)
         {
           comboBoxPort_Host.Items.AddRange(ports);
