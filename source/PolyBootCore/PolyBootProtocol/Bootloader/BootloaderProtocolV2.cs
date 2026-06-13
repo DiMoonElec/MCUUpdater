@@ -13,7 +13,38 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
 
     public PolyBootActionResult BootloaderGetFirmwareVersion(out FirmwareVersion firmwareVersion)
     {
-      throw new NotImplementedException();
+      firmwareVersion = null;
+
+      if (TransportChannel.Send(new byte[] { CMD_BOOTLOADER_GET_FIRMWARE_VERSION }) == false)
+        return PolyBootActionResult.ConnectionLost;
+
+      var resp = TransportChannel.Receive();
+
+      if (resp == null)
+        return PolyBootActionResult.ConnectionLost;
+
+      if (resp[0] != CMD_BOOTLOADER_GET_FIRMWARE_VERSION)
+        return PolyBootActionResult.InternalError;
+
+      // Прошивка отсутствует — возвращаем объект с FirmwareIsPresent=false
+      if (resp[1] == 0x01)
+      {
+        firmwareVersion = new FirmwareVersion(0, 0, 0, firmwareIsPresent: false);
+        return PolyBootActionResult.OK;
+      }
+
+      if (resp[1] != 0x00)
+        return PolyBootActionResult.Error;
+
+      if (resp.Length < 8)
+        return PolyBootActionResult.InternalError;
+
+      ushort major = BitConverter.ToUInt16(resp, 2);
+      ushort minor = BitConverter.ToUInt16(resp, 4);
+      ushort patch = BitConverter.ToUInt16(resp, 6);
+
+      firmwareVersion = new FirmwareVersion(major, minor, patch, firmwareIsPresent: true);
+      return PolyBootActionResult.OK;
     }
   }
 }
