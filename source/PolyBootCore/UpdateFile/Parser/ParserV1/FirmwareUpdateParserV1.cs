@@ -1,5 +1,4 @@
-﻿using PolyBootCore.UpdateFile.Parser;
-using System;
+﻿using System;
 using System.IO;
 
 namespace PolyBootCore.UpdateFile.Parser.ParserV1

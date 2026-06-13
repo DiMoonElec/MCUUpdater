@@ -143,6 +143,11 @@ namespace PolyBootCore.UpdateFile.Parser
         throw new InvalidDataException(
           string.Format("Invalid version format '{0}' in {1}", value, context));
       }
+      catch (OverflowException)
+      {
+        throw new InvalidDataException(
+            string.Format("Version value out of range '{0}' in {1}", value, context));
+      }
     }
 
     internal static int ParseInt(string value, string context)
