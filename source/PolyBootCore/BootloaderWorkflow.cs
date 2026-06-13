@@ -1,8 +1,9 @@
-﻿using System;
-using System.Threading;
-using PolyBootCore.Bootloader;
+﻿using PolyBootCore.PolyBootProtocol;
+using PolyBootCore.PolyBootProtocol.Bootloader;
 using PolyBootCore.Transport;
 using PolyBootCore.UpdateFile;
+using System;
+using System.Threading;
 
 namespace PolyBootCore
 {
@@ -22,7 +23,7 @@ namespace PolyBootCore
 
   public class BootloaderWorkflow
   {
-    IBootloaderProtocol Bootloader;
+    IBootloaderTransport Transport;
 
     public event BootloaderEventDelegate EraseBegin;
     public event BootloaderEventDelegate EraseEnd;
@@ -46,7 +47,8 @@ namespace PolyBootCore
     public BootloaderWorkflow(ConnectionConfig config)
     {
       connectionTimeout = config.DeviceWaitTimeout;
-      Init(config.CreateTransport());
+      var transport = config.CreateTransport();
+      Transport = transport;
     }
 
     public BootloaderWorkflow(ConnectionConfig config, CancellationToken token)
@@ -54,7 +56,7 @@ namespace PolyBootCore
       connectionTimeout = config.DeviceWaitTimeout;
 
       var transport = config.CreateTransport();
-      Init(transport);
+      Transport = transport;
       transport.SetCancellationToken(token);
       hasCancellation = true;
       cancellationToken = token;
@@ -81,13 +83,6 @@ namespace PolyBootCore
         default:
           return "Unknown result";
       }
-    }
-
-    private void Init(IBootloaderTransport transport)
-    {
-      Bootloader = new BootloaderProtocol(transport);
-      Bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
-      Bootloader.BootloaderUserDataErasureProgress += bootloaderUserDataErasureProgress;
     }
 
     private void bootloaderUserDataErasureProgress(int numBlocks, int currentBlock)
@@ -120,9 +115,25 @@ namespace PolyBootCore
       try
       {
         if (updateFile.ProtocolVersion == 0)
-          return UpdateProtocolVersion0(updateFile);
+        {
+          var bootloader = new BootloaderProtocolV0(Transport);
+
+          bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
+          var result = UpdateProtocolVersion0(bootloader, updateFile);
+          bootloader.BootloaderMemoryErasureProgress -= bootloaderMemoryErasureProgress;
+
+          return result;
+        }
         else if (updateFile.ProtocolVersion == 1)
-          return UpdateProtocolVersion1(updateFile);
+        {
+          var bootloader = new BootloaderProtocolV1(Transport);
+
+          bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
+          var result = UpdateProtocolVersion1(bootloader, updateFile);
+          bootloader.BootloaderMemoryErasureProgress -= bootloaderMemoryErasureProgress;
+
+          return result;
+        }
         else
           throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
       }
@@ -132,11 +143,12 @@ namespace PolyBootCore
       }
       finally
       {
-        Bootloader.Disconnect();
+        Transport.Disconnect();
       }
     }
 
-    private BootloaderWorkflowResult UpdateProtocolVersion1(FirmwareUpdateFile updateFile)
+    private BootloaderWorkflowResult UpdateProtocolVersion1(IBootloaderProtocolV1 bootloader,
+      FirmwareUpdateFile updateFile)
     {
       int connectionIterations = connectionTimeout * 2;
       int i;
@@ -145,7 +157,7 @@ namespace PolyBootCore
         if (hasCancellation)
           cancellationToken.ThrowIfCancellationRequested();
 
-        if (InitializeConnection())
+        if (InitializeConnection(bootloader))
           break;
 
         System.Threading.Thread.Sleep(500);
@@ -160,7 +172,7 @@ namespace PolyBootCore
 
       EraseBegin?.Invoke();
 
-      result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderBegin_V1(updateFile.HeaderChunkBase64.Trim()));
+      result = ExecuteWithReconnectRetry(() => bootloader.BootloaderBegin(updateFile.HeaderChunkBase64.Trim()));
 
       if (result == BootloaderProtocolActionResult.IncompatibleDeviceError)
         return BootloaderWorkflowResult.IncompatibleDeviceError;
@@ -183,14 +195,14 @@ namespace PolyBootCore
 
         if (u != "")
         {
-          result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderSend(u));
+          result = ExecuteWithReconnectRetry(() => bootloader.BootloaderSend(u));
           if (result == BootloaderProtocolActionResult.ConnectionLost)
             return BootloaderWorkflowResult.ConnectionLost;
           else if (result != BootloaderProtocolActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
 
 
-          result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderWrite());
+          result = ExecuteWithReconnectRetry(() => bootloader.BootloaderWrite());
 
           if (result == BootloaderProtocolActionResult.ConnectionLost)
             return BootloaderWorkflowResult.ConnectionLost;
@@ -205,7 +217,7 @@ namespace PolyBootCore
 
       /**** Завершаем процесс обновления ****/
 
-      result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderEnd());
+      result = ExecuteWithReconnectRetry(() => bootloader.BootloaderEnd());
 
       if (result == BootloaderProtocolActionResult.ConnectionLost)
         return BootloaderWorkflowResult.ConnectionLost;
@@ -216,7 +228,7 @@ namespace PolyBootCore
 
       bool crcOK = false;
 
-      result = ExecuteWithReconnectRetry(() => Bootloader.BootloaderCheckApplicationCRC(out crcOK));
+      result = ExecuteWithReconnectRetry(() => bootloader.BootloaderCheckApplicationCRC(out crcOK));
 
       if (result == BootloaderProtocolActionResult.ConnectionLost)
         return BootloaderWorkflowResult.ConnectionLost;
@@ -227,14 +239,15 @@ namespace PolyBootCore
 
       /**** Запускаем прошивку ****/
 
-      result = Bootloader.BootloaderApplicationRun();
+      result = bootloader.BootloaderApplicationRun();
       if (result == BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.OK;
       else
         return BootloaderWorkflowResult.ConnectionLost;
     }
 
-    private BootloaderWorkflowResult UpdateProtocolVersion0(FirmwareUpdateFile updateFile)
+    private BootloaderWorkflowResult UpdateProtocolVersion0(IBootloaderProtocolV0 bootloader,
+      FirmwareUpdateFile updateFile)
     {
       int connectionIterations = connectionTimeout * 2;
       int i;
@@ -243,7 +256,7 @@ namespace PolyBootCore
         if (hasCancellation)
           cancellationToken.ThrowIfCancellationRequested();
 
-        if (InitializeConnection())
+        if (InitializeConnection(bootloader))
           break;
 
         System.Threading.Thread.Sleep(500);
@@ -258,7 +271,7 @@ namespace PolyBootCore
       if (EraseBegin != null)
         EraseBegin();
 
-      result = Bootloader.BootloaderBegin_V0();
+      result = bootloader.BootloaderBegin();
 
       if (EraseEnd != null)
         EraseEnd();
@@ -278,11 +291,11 @@ namespace PolyBootCore
 
         if (u != "")
         {
-          result = Bootloader.BootloaderSend(u);
+          result = bootloader.BootloaderSend(u);
           if (result != BootloaderProtocolActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
 
-          result = Bootloader.BootloaderWrite();
+          result = bootloader.BootloaderWrite();
           if (result != BootloaderProtocolActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
         }
@@ -298,26 +311,27 @@ namespace PolyBootCore
         UploadEnd();
 
       //Завершаем процесс обновления
-      result = Bootloader.BootloaderEnd();
+      result = bootloader.BootloaderEnd();
       if (result != BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
 
       //Проверяем CRC прошивки
       bool crcOK;
-      result = Bootloader.BootloaderCheckApplicationCRC(out crcOK);
+      result = bootloader.BootloaderCheckApplicationCRC(out crcOK);
       if (result != BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
       if (crcOK == false)
         return BootloaderWorkflowResult.UpdateError;
 
       //Запускаем прошивку
-      result = Bootloader.BootloaderApplicationRun();
+      result = bootloader.BootloaderApplicationRun();
       if (result == BootloaderProtocolActionResult.OK)
         return BootloaderWorkflowResult.OK;
       else
         return BootloaderWorkflowResult.UpdateError;
     }
 
+#if false
     public BootloaderWorkflowResult EraseUserData()
     {
       if (UserDataEraseBegin != null)
@@ -333,15 +347,16 @@ namespace PolyBootCore
 
       return BootloaderWorkflowResult.ErasingError;
     }
+#endif
 
-    private bool InitializeConnection()
+    private bool InitializeConnection(IBootloaderBase bootloader)
     {
-      if (Bootloader.Connect() == false)
+      if (Transport.Connect() == false)
         return false;
 
-      if (Bootloader.BootloaderActivate() != BootloaderProtocolActionResult.OK)
+      if (bootloader.BootloaderActivate() != BootloaderProtocolActionResult.OK)
       {
-        Bootloader.Disconnect();
+        Transport.Disconnect();
         return false;
       }
 
@@ -392,15 +407,15 @@ namespace PolyBootCore
 
       // Если попали сюда, то все попытки повторной отправки команды
       // были исчерпаны, возвращаем ошибку потери связи
-      Bootloader.Disconnect();
+      Transport.Disconnect();
       return BootloaderProtocolActionResult.ConnectionLost;
     }
 
 
     private bool Reconnect()
     {
-      Bootloader.Disconnect();
-      return Bootloader.Connect();
+      Transport.Disconnect();
+      return Transport.Connect();
     }
   }
 }

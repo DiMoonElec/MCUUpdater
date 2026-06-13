@@ -1,13 +1,12 @@
-﻿using System;
+﻿using PolyBootCore.Transport;
+using System;
 using System.Collections.Generic;
-using PolyBootCore.Transport;
 
-namespace PolyBootCore.Bootloader
+namespace PolyBootCore.PolyBootProtocol.Bootloader
 {
-  internal class BootloaderProtocol : IBootloaderProtocol
+  internal abstract class BootloaderBase : IBootloaderBase
   {
     const byte CMD_BOOTLOADER_ACTIVATE = 0x70;
-    const byte CMD_BOOTLOADER_BEGIN = 0x71;
     const byte CMD_BOOTLOADER_SEND = 0x72;
     const byte CMD_BOOTLOADER_WRITE = 0x73;
     const byte CMD_BOOTLOADER_END = 0x74;
@@ -16,18 +15,14 @@ namespace PolyBootCore.Bootloader
     const byte CMD_BOOTLOADER_SET_PERMANENT_DATA = 0x77;
     const byte CMD_BOOTLOADER_ERASE_USER_DATA = 0x78;
 
-    public event BootloaderErasureProgressDelegate BootloaderMemoryErasureProgress;
     public event BootloaderErasureProgressDelegate BootloaderUserDataErasureProgress;
 
-    private IBootloaderTransport Transport;
+    private protected IBootloaderTransport Transport;
 
-    public BootloaderProtocol(IBootloaderTransport transport)
+    public BootloaderBase(IBootloaderTransport transport)
     {
       Transport = transport;
     }
-
-    public bool Connect() => Transport.Connect();
-    public void Disconnect() => Transport.Disconnect();
 
     public BootloaderProtocolActionResult BootloaderActivate()
     {
@@ -60,102 +55,6 @@ namespace PolyBootCore.Bootloader
         return BootloaderProtocolActionResult.Error;
 
       return BootloaderProtocolActionResult.OK;
-    }
-
-    public BootloaderProtocolActionResult BootloaderBegin_V0()
-    {
-      //Отправляем запрос
-      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_BEGIN });
-
-      //Если возникла ошибка  во время отправки, то выходим
-      if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
-
-      for (; ; )
-      {
-        //Ждем ответ
-        var resp = Transport.Receive();
-
-        //Проверяем ошибку таймаута ожедания ответа
-        if (resp == null)
-          return BootloaderProtocolActionResult.ConnectionLost;
-
-        //Если тут вернули не то, то ожидаем, то выходим с ошибкой
-        if (resp[0] != CMD_BOOTLOADER_BEGIN)
-          return BootloaderProtocolActionResult.InternalError;
-
-        //Если результат выполнения операции ОК, то выходим
-        if (resp[1] == 0x00)
-          return BootloaderProtocolActionResult.OK;
-
-        //Если ошибка очистки
-        if (resp[1] == 0x01)
-          return BootloaderProtocolActionResult.Error;
-
-        //Если очистка в процессе
-        if (resp[1] == 0xFF)
-        {
-          if (BootloaderMemoryErasureProgress != null)
-          {
-            int numBlocks = BitConverter.ToInt32(resp, 2);
-            int currentBlock = BitConverter.ToInt32(resp, 6);
-            BootloaderMemoryErasureProgress(numBlocks, currentBlock);
-          }
-        }
-      }
-    }
-
-    public BootloaderProtocolActionResult BootloaderBegin_V1(string header)
-    {
-      //Формируем запрос
-      List<byte> req = new List<byte>();
-      req.Add(CMD_BOOTLOADER_BEGIN);
-      req.AddRange(Convert.FromBase64String(header));
-
-      //Отправляем запрос
-      var sendResult = Transport.Send(req.ToArray());
-
-      //Если возникла ошибка  во время отправки, то выходим
-      if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
-
-      for (; ; )
-      {
-        //Ждем ответ
-        var resp = Transport.Receive();
-
-        //Проверяем ошибку таймаута ожедания ответа
-        if (resp == null)
-          return BootloaderProtocolActionResult.ConnectionLost;
-
-        //Если тут вернули не то, то ожидаем, то выходим с ошибкой
-        if (resp[0] != CMD_BOOTLOADER_BEGIN)
-          return BootloaderProtocolActionResult.InternalError;
-
-        //Если результат выполнения операции ОК, то выходим
-        if (resp[1] == 0x00)
-          return BootloaderProtocolActionResult.OK;
-
-        //Если ошибка очистки
-        if (resp[1] == 0x01)
-          return BootloaderProtocolActionResult.Error;
-
-        //Если идентификационный заголовок не совпал
-        //то эта прошивка не подходит к данному устройству
-        if (resp[1] == 0x02)
-          return BootloaderProtocolActionResult.IncompatibleDeviceError;
-
-        //Если очистка в процессе
-        if (resp[1] == 0xFF)
-        {
-          if (BootloaderMemoryErasureProgress != null)
-          {
-            int numBlocks = BitConverter.ToInt32(resp, 2);
-            int currentBlock = BitConverter.ToInt32(resp, 6);
-            BootloaderMemoryErasureProgress(numBlocks, currentBlock);
-          }
-        }
-      }
     }
 
     public BootloaderProtocolActionResult BootloaderSend(string frame)
@@ -361,9 +260,5 @@ namespace PolyBootCore.Bootloader
       }
     }
 
-    public BootloaderProtocolActionResult BootloaderPermanentDataSet(byte[] data)
-    {
-      throw new NotImplementedException();
-    }
   }
 }
