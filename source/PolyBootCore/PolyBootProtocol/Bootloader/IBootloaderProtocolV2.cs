@@ -41,5 +41,6 @@
   internal interface IBootloaderProtocolV2 : IBootloaderProtocolV1
   {
     PolyBootActionResult BootloaderGetFirmwareVersion(out FirmwareVersion firmwareVersion);
+    PolyBootActionResult BootloaderGetDeviceID(out string deviceId);
   }
 }
