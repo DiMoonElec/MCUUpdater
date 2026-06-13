@@ -46,7 +46,7 @@
     <Compile Include="BinexLib\BinexLibTransmitter.cs" />
     <Compile Include="BinexLib\Crc.cs" />
     <Compile Include="BootloaderWorkflow.cs" />
-    <Compile Include="PolyBootProtocol\BootloaderProtocolActionResult.cs" />
+    <Compile Include="PolyBootProtocol\PolyBootActionResult.cs" />
     <Compile Include="PolyBootProtocol\Bootloader\BootloaderBase.cs" />
     <Compile Include="PolyBootProtocol\Bootloader\BootloaderProtocolV1.cs" />
     <Compile Include="PolyBootProtocol\Bootloader\BootloaderProtocolV2.cs" />
@@ -59,8 +59,11 @@
     <Compile Include="PolyBootProtocol\Bootloader\BootloaderProtocolV0.cs" />
     <Compile Include="PolyBootProtocol\Bootloader\IBootloaderBase.cs" />
     <Compile Include="PolyBootProtocol\Bootloader\IBootloaderProtocolV0.cs" />
+    <Compile Include="PolyBootProtocol\Proxy\IProxyProtocolV1.cs" />
+    <Compile Include="PolyBootProtocol\Proxy\ProxyProtocolV1.cs" />
     <Compile Include="Transport\BootloaderTransport.cs" />
-    <Compile Include="Transport\IBootloaderConnectionManager.cs" />
+    <Compile Include="Transport\IBootloaderTransportChannel.cs" />
+    <Compile Include="Transport\IBootloaderTransportConnection.cs" />
     <Compile Include="Transport\IBootloaderTransport.cs" />
     <Compile Include="Connectors\IDeviceConnector.cs" />
     <Compile Include="Connectors\SerialPortConnector.cs" />
@@ -71,8 +74,6 @@
     <Compile Include="UpdateFile\FirmwareUpdateFile.cs" />
     <Compile Include="UpdateFile\FirmwareUpdateParser.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="PolyBootProtocol\Proxy\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -17,14 +17,14 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
 
     public event BootloaderErasureProgressDelegate BootloaderUserDataErasureProgress;
 
-    private protected IBootloaderTransport Transport;
+    private protected IBootloaderTransportChannel TransportChannel;
 
-    public BootloaderBase(IBootloaderTransport transport)
+    public BootloaderBase(IBootloaderTransportChannel transportChannel)
     {
-      Transport = transport;
+      TransportChannel = transportChannel;
     }
 
-    public BootloaderProtocolActionResult BootloaderActivate()
+    public PolyBootActionResult BootloaderActivate()
     {
       //Формируем запрос
       List<byte> req = new List<byte>();
@@ -32,32 +32,32 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
       req.AddRange(System.Text.Encoding.ASCII.GetBytes("ACTIVATE"));
 
       //Отправляем запрос
-      var sendResult = Transport.Send(req.ToArray());
+      var sendResult = TransportChannel.Send(req.ToArray());
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = Transport.Receive();
+      var resp = TransportChannel.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
       if (resp[0] != CMD_BOOTLOADER_ACTIVATE)
-        return BootloaderProtocolActionResult.InternalError;
+        return PolyBootActionResult.InternalError;
 
       //Если результат выполнения операции не ОК,
       //то выходим с ошибкой
       if (resp[1] != 0x00)
-        return BootloaderProtocolActionResult.Error;
+        return PolyBootActionResult.Error;
 
-      return BootloaderProtocolActionResult.OK;
+      return PolyBootActionResult.OK;
     }
 
-    public BootloaderProtocolActionResult BootloaderSend(string frame)
+    public PolyBootActionResult BootloaderSend(string frame)
     {
       //Формируем запрос
       List<byte> req = new List<byte>();
@@ -65,187 +65,187 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
       req.AddRange(Convert.FromBase64String(frame));
 
       //Отправляем запрос
-      var sendResult = Transport.Send(req.ToArray());
+      var sendResult = TransportChannel.Send(req.ToArray());
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = Transport.Receive();
+      var resp = TransportChannel.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
       if (resp[0] != CMD_BOOTLOADER_SEND)
-        return BootloaderProtocolActionResult.InternalError;
+        return PolyBootActionResult.InternalError;
 
       //Если результат выполнения операции не ОК,
       //то выходим с ошибкой
       if (resp[1] != 0x00)
-        return BootloaderProtocolActionResult.Error;
+        return PolyBootActionResult.Error;
 
-      return BootloaderProtocolActionResult.OK;
+      return PolyBootActionResult.OK;
     }
 
-    public BootloaderProtocolActionResult BootloaderWrite()
+    public PolyBootActionResult BootloaderWrite()
     {
       //Отправляем запрос
-      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_WRITE });
+      var sendResult = TransportChannel.Send(new byte[] { CMD_BOOTLOADER_WRITE });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = Transport.Receive();
+      var resp = TransportChannel.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
       if (resp[0] != CMD_BOOTLOADER_WRITE)
-        return BootloaderProtocolActionResult.InternalError;
+        return PolyBootActionResult.InternalError;
 
       //Если результат выполнения операции не ОК, то выходим
       if (resp[1] != 0x00)
-        return BootloaderProtocolActionResult.Error;
+        return PolyBootActionResult.Error;
 
-      return BootloaderProtocolActionResult.OK;
+      return PolyBootActionResult.OK;
     }
 
-    public BootloaderProtocolActionResult BootloaderEnd()
+    public PolyBootActionResult BootloaderEnd()
     {
       //Отправляем запрос
-      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_END });
+      var sendResult = TransportChannel.Send(new byte[] { CMD_BOOTLOADER_END });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = Transport.Receive();
+      var resp = TransportChannel.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
       if (resp[0] != CMD_BOOTLOADER_END)
-        return BootloaderProtocolActionResult.InternalError;
+        return PolyBootActionResult.InternalError;
 
       //Если результат выполнения операции не ОК, то выходим
       if (resp[1] != 0x00)
-        return BootloaderProtocolActionResult.Error;
+        return PolyBootActionResult.Error;
 
-      return BootloaderProtocolActionResult.OK;
+      return PolyBootActionResult.OK;
     }
 
-    public BootloaderProtocolActionResult BootloaderCheckApplicationCRC(out bool Result)
+    public PolyBootActionResult BootloaderCheckApplicationCRC(out bool Result)
     {
       //Отправляем запрос
-      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_CHECK_CRC });
+      var sendResult = TransportChannel.Send(new byte[] { CMD_BOOTLOADER_CHECK_CRC });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
       {
         Result = false;
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
       }
 
       //Ждем ответ
-      var resp = Transport.Receive();
+      var resp = TransportChannel.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
       {
         Result = false;
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
       }
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
       if (resp[0] != CMD_BOOTLOADER_CHECK_CRC)
       {
         Result = false;
-        return BootloaderProtocolActionResult.InternalError;
+        return PolyBootActionResult.InternalError;
       }
 
 
       if (resp[1] == 0x00)
       {
         Result = true;
-        return BootloaderProtocolActionResult.OK;
+        return PolyBootActionResult.OK;
       }
 
       if (resp[1] == 0x01)
       {
         Result = false;
-        return BootloaderProtocolActionResult.OK;
+        return PolyBootActionResult.OK;
       }
 
       Result = false;
-      return BootloaderProtocolActionResult.Error;
+      return PolyBootActionResult.Error;
     }
 
-    public BootloaderProtocolActionResult BootloaderApplicationRun()
+    public PolyBootActionResult BootloaderApplicationRun()
     {
       //Отправляем запрос
-      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_APP_RUN });
+      var sendResult = TransportChannel.Send(new byte[] { CMD_BOOTLOADER_APP_RUN });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Ждем ответ
-      var resp = Transport.Receive();
+      var resp = TransportChannel.Receive();
 
       //Проверяем ошибку таймаута ожедания ответа
       if (resp == null)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       //Если тут вернули не то, то ожидаем, то выходим с ошибкой
       if (resp[0] != CMD_BOOTLOADER_APP_RUN)
-        return BootloaderProtocolActionResult.InternalError;
+        return PolyBootActionResult.InternalError;
 
       //Если результат выполнения операции не ОК, то выходим
       if (resp[1] != 0x00)
-        return BootloaderProtocolActionResult.Error;
+        return PolyBootActionResult.Error;
 
-      return BootloaderProtocolActionResult.OK;
+      return PolyBootActionResult.OK;
     }
 
-    public BootloaderProtocolActionResult BootloaderEraseUserData()
+    public PolyBootActionResult BootloaderEraseUserData()
     {
       //Отправляем запрос
-      var sendResult = Transport.Send(new byte[] { CMD_BOOTLOADER_ERASE_USER_DATA });
+      var sendResult = TransportChannel.Send(new byte[] { CMD_BOOTLOADER_ERASE_USER_DATA });
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       for (; ; )
       {
         //Ждем ответ
-        var resp = Transport.Receive();
+        var resp = TransportChannel.Receive();
 
         //Проверяем ошибку таймаута ожедания ответа
         if (resp == null)
-          return BootloaderProtocolActionResult.ConnectionLost;
+          return PolyBootActionResult.ConnectionLost;
 
         //Если тут вернули не то, то ожидаем, то выходим с ошибкой
         if (resp[0] != CMD_BOOTLOADER_ERASE_USER_DATA)
-          return BootloaderProtocolActionResult.InternalError;
+          return PolyBootActionResult.InternalError;
 
         //Если результат выполнения операции ОК, то выходим
         if (resp[1] == 0x00)
-          return BootloaderProtocolActionResult.OK;
+          return PolyBootActionResult.OK;
 
         //Если ошибка очистки
         if (resp[1] == 0x01)
-          return BootloaderProtocolActionResult.Error;
+          return PolyBootActionResult.Error;
 
         //Если очистка в процессе
         if (resp[1] == 0xFF)

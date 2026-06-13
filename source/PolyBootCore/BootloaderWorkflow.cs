@@ -166,7 +166,7 @@ namespace PolyBootCore
       if (i == connectionIterations)
         return BootloaderWorkflowResult.ConnectionError;
 
-      BootloaderProtocolActionResult result;
+      PolyBootActionResult result;
 
       /**** Очистка flash-памяти ****/
 
@@ -174,11 +174,11 @@ namespace PolyBootCore
 
       result = ExecuteWithReconnectRetry(() => bootloader.BootloaderBegin(updateFile.HeaderChunkBase64.Trim()));
 
-      if (result == BootloaderProtocolActionResult.IncompatibleDeviceError)
+      if (result == PolyBootActionResult.IncompatibleDeviceError)
         return BootloaderWorkflowResult.IncompatibleDeviceError;
-      else if (result == BootloaderProtocolActionResult.ConnectionLost)
+      else if (result == PolyBootActionResult.ConnectionLost)
         return BootloaderWorkflowResult.ConnectionLost;
-      if (result != BootloaderProtocolActionResult.OK)
+      if (result != PolyBootActionResult.OK)
         return BootloaderWorkflowResult.ErasingError;
 
       EraseEnd?.Invoke();
@@ -196,17 +196,17 @@ namespace PolyBootCore
         if (u != "")
         {
           result = ExecuteWithReconnectRetry(() => bootloader.BootloaderSend(u));
-          if (result == BootloaderProtocolActionResult.ConnectionLost)
+          if (result == PolyBootActionResult.ConnectionLost)
             return BootloaderWorkflowResult.ConnectionLost;
-          else if (result != BootloaderProtocolActionResult.OK)
+          else if (result != PolyBootActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
 
 
           result = ExecuteWithReconnectRetry(() => bootloader.BootloaderWrite());
 
-          if (result == BootloaderProtocolActionResult.ConnectionLost)
+          if (result == PolyBootActionResult.ConnectionLost)
             return BootloaderWorkflowResult.ConnectionLost;
-          else if (result != BootloaderProtocolActionResult.OK)
+          else if (result != PolyBootActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
         }
 
@@ -219,9 +219,9 @@ namespace PolyBootCore
 
       result = ExecuteWithReconnectRetry(() => bootloader.BootloaderEnd());
 
-      if (result == BootloaderProtocolActionResult.ConnectionLost)
+      if (result == PolyBootActionResult.ConnectionLost)
         return BootloaderWorkflowResult.ConnectionLost;
-      else if (result != BootloaderProtocolActionResult.OK)
+      else if (result != PolyBootActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
 
       /**** Проверяем CRC прошивки ****/
@@ -230,9 +230,9 @@ namespace PolyBootCore
 
       result = ExecuteWithReconnectRetry(() => bootloader.BootloaderCheckApplicationCRC(out crcOK));
 
-      if (result == BootloaderProtocolActionResult.ConnectionLost)
+      if (result == PolyBootActionResult.ConnectionLost)
         return BootloaderWorkflowResult.ConnectionLost;
-      else if (result != BootloaderProtocolActionResult.OK)
+      else if (result != PolyBootActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
       else if (crcOK == false)
         return BootloaderWorkflowResult.UpdateError;
@@ -240,7 +240,7 @@ namespace PolyBootCore
       /**** Запускаем прошивку ****/
 
       result = bootloader.BootloaderApplicationRun();
-      if (result == BootloaderProtocolActionResult.OK)
+      if (result == PolyBootActionResult.OK)
         return BootloaderWorkflowResult.OK;
       else
         return BootloaderWorkflowResult.ConnectionLost;
@@ -265,7 +265,7 @@ namespace PolyBootCore
       if (i == connectionIterations)
         return BootloaderWorkflowResult.ConnectionError;
 
-      BootloaderProtocolActionResult result;
+      PolyBootActionResult result;
 
       //Очистка flash-памяти
       if (EraseBegin != null)
@@ -276,7 +276,7 @@ namespace PolyBootCore
       if (EraseEnd != null)
         EraseEnd();
 
-      if (result != BootloaderProtocolActionResult.OK)
+      if (result != PolyBootActionResult.OK)
         return BootloaderWorkflowResult.ErasingError;
 
       //Отправка обновления
@@ -292,11 +292,11 @@ namespace PolyBootCore
         if (u != "")
         {
           result = bootloader.BootloaderSend(u);
-          if (result != BootloaderProtocolActionResult.OK)
+          if (result != PolyBootActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
 
           result = bootloader.BootloaderWrite();
-          if (result != BootloaderProtocolActionResult.OK)
+          if (result != PolyBootActionResult.OK)
             return BootloaderWorkflowResult.UpdateError;
         }
 
@@ -312,20 +312,20 @@ namespace PolyBootCore
 
       //Завершаем процесс обновления
       result = bootloader.BootloaderEnd();
-      if (result != BootloaderProtocolActionResult.OK)
+      if (result != PolyBootActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
 
       //Проверяем CRC прошивки
       bool crcOK;
       result = bootloader.BootloaderCheckApplicationCRC(out crcOK);
-      if (result != BootloaderProtocolActionResult.OK)
+      if (result != PolyBootActionResult.OK)
         return BootloaderWorkflowResult.ConnectionError;
       if (crcOK == false)
         return BootloaderWorkflowResult.UpdateError;
 
       //Запускаем прошивку
       result = bootloader.BootloaderApplicationRun();
-      if (result == BootloaderProtocolActionResult.OK)
+      if (result == PolyBootActionResult.OK)
         return BootloaderWorkflowResult.OK;
       else
         return BootloaderWorkflowResult.UpdateError;
@@ -354,7 +354,7 @@ namespace PolyBootCore
       if (Transport.Connect() == false)
         return false;
 
-      if (bootloader.BootloaderActivate() != BootloaderProtocolActionResult.OK)
+      if (bootloader.BootloaderActivate() != PolyBootActionResult.OK)
       {
         Transport.Disconnect();
         return false;
@@ -364,8 +364,8 @@ namespace PolyBootCore
     }
 
     // Обобщённый ретрай с переподключением
-    BootloaderProtocolActionResult ExecuteWithReconnectRetry(
-        Func<BootloaderProtocolActionResult> operation,
+    PolyBootActionResult ExecuteWithReconnectRetry(
+        Func<PolyBootActionResult> operation,
         int maxAttempts = 10,
         int delayMsOnReconnectFail = 1000)
     {
@@ -374,10 +374,10 @@ namespace PolyBootCore
       if (delayMsOnReconnectFail < 0) throw new ArgumentOutOfRangeException(nameof(delayMsOnReconnectFail));
 
       // Первая попытка отправки запроса
-      BootloaderProtocolActionResult result = operation();
+      PolyBootActionResult result = operation();
 
       // Если результат не требует повторения — возвращаем его
-      if (result != BootloaderProtocolActionResult.ConnectionLost)
+      if (result != PolyBootActionResult.ConnectionLost)
         return result;
 
       // В результате первой попытки вызова operation()
@@ -393,7 +393,7 @@ namespace PolyBootCore
           result = operation();
 
           // Если результат не требует повторения — возвращаем его
-          if (result != BootloaderProtocolActionResult.ConnectionLost)
+          if (result != PolyBootActionResult.ConnectionLost)
             return result;
         }
         else
@@ -408,7 +408,7 @@ namespace PolyBootCore
       // Если попали сюда, то все попытки повторной отправки команды
       // были исчерпаны, возвращаем ошибку потери связи
       Transport.Disconnect();
-      return BootloaderProtocolActionResult.ConnectionLost;
+      return PolyBootActionResult.ConnectionLost;
     }
 
 

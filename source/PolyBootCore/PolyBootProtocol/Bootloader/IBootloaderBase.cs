@@ -12,37 +12,37 @@
     /// <summary>
     /// Перевести загрузчик в активное состояние
     /// </summary>
-    BootloaderProtocolActionResult BootloaderActivate();
+    PolyBootActionResult BootloaderActivate();
 
     /// <summary>
     /// Выполняет загрузку чанка и его расшивровку в ОЗУ ПЛК
     /// </summary>
-    BootloaderProtocolActionResult BootloaderSend(string frame);
+    PolyBootActionResult BootloaderSend(string frame);
 
     /// <summary>
     /// Данная команда выполняет запись ранее загруженного чанка из ОЗУ во flash-память
     /// </summary>
-    BootloaderProtocolActionResult BootloaderWrite();
+    PolyBootActionResult BootloaderWrite();
 
     /// <summary>
     /// Финализация процесса обновления прошивки
     /// </summary>
-    BootloaderProtocolActionResult BootloaderEnd();
+    PolyBootActionResult BootloaderEnd();
 
     /// <summary>
     /// Проверяет контрольную сумму пользовательского приложения
     /// </summary>
     /// <param name="Result">true - контрольная сумма сошлась</param>
-    BootloaderProtocolActionResult BootloaderCheckApplicationCRC(out bool Result);
+    PolyBootActionResult BootloaderCheckApplicationCRC(out bool Result);
 
     /// <summary>
     /// Передает управление приложению
     /// </summary>
-    BootloaderProtocolActionResult BootloaderApplicationRun();
+    PolyBootActionResult BootloaderApplicationRun();
 
     /// <summary>
     /// Очистить пользовательскую область памяти
     /// </summary>
-    BootloaderProtocolActionResult BootloaderEraseUserData();
+    PolyBootActionResult BootloaderEraseUserData();
   }
 }

@@ -7,11 +7,11 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
   {
     const byte CMD_BOOTLOADER_GET_FIRMWARE_VERSION = 0x79;
 
-    public BootloaderProtocolV2(IBootloaderTransport transport) : base(transport)
+    public BootloaderProtocolV2(IBootloaderTransportChannel transportChannel) : base(transportChannel)
     {
     }
 
-    public BootloaderProtocolActionResult BootloaderGetFirmwareVersion(out FirmwareVersion firmwareVersion)
+    public PolyBootActionResult BootloaderGetFirmwareVersion(out FirmwareVersion firmwareVersion)
     {
       throw new NotImplementedException();
     }

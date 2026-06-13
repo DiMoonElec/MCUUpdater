@@ -1,6 +1,6 @@
 ﻿namespace PolyBootCore.Transport
 {
-  internal interface IBootloaderConnectionManager
+  internal interface IBootloaderTransportConnection
   {
     bool Connect();
     void Disconnect();

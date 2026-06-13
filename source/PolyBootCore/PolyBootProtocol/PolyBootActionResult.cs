@@ -1,6 +1,6 @@
 ﻿namespace PolyBootCore.PolyBootProtocol
 {
-  internal enum BootloaderProtocolActionResult
+  internal enum PolyBootActionResult
   {
     OK,
     Error,

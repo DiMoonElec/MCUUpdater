@@ -10,11 +10,11 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
 
     public event BootloaderErasureProgressDelegate BootloaderMemoryErasureProgress;
 
-    public BootloaderProtocolV1(IBootloaderTransport transport) : base(transport)
+    public BootloaderProtocolV1(IBootloaderTransportChannel transportChannel) : base(transportChannel)
     {
     }
 
-    public BootloaderProtocolActionResult BootloaderBegin(string header)
+    public PolyBootActionResult BootloaderBegin(string header)
     {
       //Формируем запрос
       List<byte> req = new List<byte>();
@@ -22,37 +22,37 @@ namespace PolyBootCore.PolyBootProtocol.Bootloader
       req.AddRange(Convert.FromBase64String(header));
 
       //Отправляем запрос
-      var sendResult = Transport.Send(req.ToArray());
+      var sendResult = TransportChannel.Send(req.ToArray());
 
       //Если возникла ошибка  во время отправки, то выходим
       if (sendResult == false)
-        return BootloaderProtocolActionResult.ConnectionLost;
+        return PolyBootActionResult.ConnectionLost;
 
       for (; ; )
       {
         //Ждем ответ
-        var resp = Transport.Receive();
+        var resp = TransportChannel.Receive();
 
         //Проверяем ошибку таймаута ожедания ответа
         if (resp == null)
-          return BootloaderProtocolActionResult.ConnectionLost;
+          return PolyBootActionResult.ConnectionLost;
 
         //Если тут вернули не то, то ожидаем, то выходим с ошибкой
         if (resp[0] != CMD_BOOTLOADER_BEGIN)
-          return BootloaderProtocolActionResult.InternalError;
+          return PolyBootActionResult.InternalError;
 
         //Если результат выполнения операции ОК, то выходим
         if (resp[1] == 0x00)
-          return BootloaderProtocolActionResult.OK;
+          return PolyBootActionResult.OK;
 
         //Если ошибка очистки
         if (resp[1] == 0x01)
-          return BootloaderProtocolActionResult.Error;
+          return PolyBootActionResult.Error;
 
         //Если идентификационный заголовок не совпал
         //то эта прошивка не подходит к данному устройству
         if (resp[1] == 0x02)
-          return BootloaderProtocolActionResult.IncompatibleDeviceError;
+          return PolyBootActionResult.IncompatibleDeviceError;
 
         //Если очистка в процессе
         if (resp[1] == 0xFF)

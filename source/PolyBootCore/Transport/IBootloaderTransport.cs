@@ -2,11 +2,9 @@
 
 namespace PolyBootCore.Transport
 {
-  internal interface IBootloaderTransport : IBootloaderConnectionManager
+  internal interface IBootloaderTransport : IBootloaderTransportConnection, IBootloaderTransportChannel
   {
     int ResponseTimeout_ms { get; set; }
     void SetCancellationToken(CancellationToken token);
-    bool Send(byte[] data);
-    byte[] Receive();
   }
 }

@@ -7,6 +7,6 @@
     /// </summary>
     event BootloaderErasureProgressDelegate BootloaderMemoryErasureProgress;
 
-    BootloaderProtocolActionResult BootloaderBegin(string header);
+    PolyBootActionResult BootloaderBegin(string header);
   }
 }
