@@ -1,9 +1,9 @@
-﻿using System;
+﻿using MCUUpdater.CLI;
+using PolyBootCore;
+using PolyBootCore.UpdateFile.Parser;
+using System;
 using System.IO;
 using System.Reflection;
-using MCUUpdater.CLI;
-using PolyBootCore;
-using PolyBootCore.UpdateFile;
 
 namespace MCUUpdater
 {
@@ -64,7 +64,7 @@ namespace MCUUpdater
       BootloaderWorkflowResult result;
 
       var update_file = FirmwareUpdateParser.Parse(updateCommand.FirmwareFile);
-      Console.WriteLine($"File loaded: Protocol Version {update_file.ProtocolVersion}, Format Version {update_file.FormatVersion}");
+      Console.WriteLine($"File loaded: Format Version {update_file.FormatVersion}");
       Console.WriteLine("Starting firmware update...");
       result = bootloaderWorkflow.Update(update_file);
       Console.WriteLine();

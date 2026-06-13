@@ -7,7 +7,7 @@
     public ushort Patch { get; private set; }
     public bool FirmwareIsPresent { get; private set; }
 
-    public FirmwareVersion(ushort major, ushort minor, ushort patch, bool firmwareIsPresent)
+    public FirmwareVersion(ushort major, ushort minor, ushort patch, bool firmwareIsPresent = true)
     {
       Major = major;
       Minor = minor;

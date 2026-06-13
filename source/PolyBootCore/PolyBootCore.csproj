@@ -72,7 +72,16 @@
     <Compile Include="MISC\PacketQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UpdateFile\FirmwareUpdateFile.cs" />
-    <Compile Include="UpdateFile\FirmwareUpdateParser.cs" />
+    <Compile Include="UpdateFile\FirmwareUpdateFileV2.cs" />
+    <Compile Include="UpdateFile\Parser\FirmwareUpdateParser.cs" />
+    <Compile Include="UpdateFile\Parser\ParserLegacy\FirmwareUpdateParserLegacy.cs" />
+    <Compile Include="UpdateFile\Parser\ParserV1\FirmwareUpdateParserV1.cs" />
+    <Compile Include="UpdateFile\Parser\ParserV2\FirmwareUpdateParserV2.cs" />
+    <Compile Include="UpdateFile\Parser\ParserV2\LineToken.cs" />
+    <Compile Include="UpdateFile\Parser\ParserV2\SectionBuilder.cs" />
+    <Compile Include="UpdateFile\Parser\ParserV2\Tokenizer.cs" />
+    <Compile Include="UpdateFile\Parser\ParserV2\Validator.cs" />
+    <Compile Include="UpdateFile\Parser\ParseHelpers.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

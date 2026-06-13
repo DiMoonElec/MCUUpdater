@@ -1,6 +1,7 @@
 ﻿using MCUUpdaterGUI.Settings;
 using PolyBootCore;
 using PolyBootCore.UpdateFile;
+using PolyBootCore.UpdateFile.Parser;
 using System;
 using System.Drawing;
 using System.Reflection;
@@ -49,7 +50,7 @@ namespace MCUUpdaterGUI
         return;
       }
 
-      FirmwareUpdateFile updateFile = null;
+      FirmwareUpdateFileV2 updateFile = null;
 
       try
       {

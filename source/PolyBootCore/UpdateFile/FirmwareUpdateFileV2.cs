@@ -1,72 +1,169 @@
-﻿using PolyBootCore.MISC;
+﻿using PolyBootCore.PolyBootProtocol.Bootloader;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace PolyBootCore.UpdateFile
 {
-  public class FirmwareData
+  public enum UpdateFileType
+  {
+    Single,
+    Complex,
+  }
+
+  /// <summary>
+  /// Данные одной прошивки из файла обновления.
+  /// Поля DeviceId, FirmwareVersion, BootloaderVersion, ProxyVersion
+  /// заполнены только для FORMAT=2; для старых форматов равны null.
+  /// </summary>
+  public sealed class FirmwareData
   {
     /// <summary>
-    /// Версия прошивки файла обновления
+    /// Строковый идентификатор устройства (ID="...").
+    /// Сверяется с результатом BootloaderGetDeviceID().
+    /// Null для FORMAT=0/1.
+    /// </summary>
+    public string DeviceId { get; private set; }
+
+    /// <summary>
+    /// Версия прошивки из файла обновления (VER=x.y.z).
+    /// Сверяется с результатом BootloaderGetFirmwareVersion().
+    /// Null для FORMAT=0/1.
     /// </summary>
     public FirmwareVersion FirmwareVersion { get; private set; }
 
     /// <summary>
-    /// Версия протокола
+    /// Требуемая версия системы команд загрузчика (BOOTLOADER=n).
+    /// Null для FORMAT=0/1.
     /// </summary>
-    public FirmwareVersion ProtocolVersion { get; private set; }
+    public int? BootloaderVersion { get; private set; }
 
     /// <summary>
-    /// Версия GATEWAY-расширений
+    /// Требуемая версия прокси-протокола (PROXY=n).
+    /// Null если устройство не поддерживает прокси или FORMAT < 2.
     /// </summary>
-    public FirmwareVersion GatewayExtensionsVersion { get; private set; }
+    public int? ProxyVersion { get; private set; }
 
     /// <summary>
-    /// DEVID-поле
-    /// </summary>
-    public string DevID { get; private set; }
-
-    /// <summary>
-    /// DESCR-поле
-    /// </summary>
-    public string Description { get; private set; }
-
-    /// <summary>
-    /// Заголовок для BootloaderBegin()
+    /// Заголовочный чанк для BootloaderBegin().
+    /// Null для FORMAT=0.
     /// </summary>
     public string HeaderChunkBase64 { get; private set; }
 
     /// <summary>
-    /// Прошивка
+    /// Чанки прошивки для BootloaderSend(). Всегда непустой список.
     /// </summary>
     public IReadOnlyList<string> DataChunksBase64 { get; private set; }
+
+    // FORMAT=0/1
+    public FirmwareData(
+      string headerChunkBase64,
+      IReadOnlyList<string> dataChunksBase64)
+    {
+      DeviceId = null;
+      FirmwareVersion = null;
+      BootloaderVersion = null;
+      ProxyVersion = null;
+      HeaderChunkBase64 = headerChunkBase64;
+      DataChunksBase64 = dataChunksBase64;
+    }
+
+    // FORMAT=2
+    public FirmwareData(
+      string deviceId,
+      FirmwareVersion firmwareVersion,
+      int bootloaderVersion,
+      int? proxyVersion,
+      string headerChunkBase64,
+      IReadOnlyList<string> dataChunksBase64)
+    {
+      DeviceId = deviceId;
+      FirmwareVersion = firmwareVersion;
+      BootloaderVersion = bootloaderVersion;
+      ProxyVersion = proxyVersion;
+      HeaderChunkBase64 = headerChunkBase64;
+      DataChunksBase64 = dataChunksBase64;
+    }
   }
 
-  public enum UpdateFileType
-  {
-    SINGLE,
-    COMPLEX
-  };
-
+  /// <summary>
+  /// Контейнер файла обновления. Хранит все форматы (0, 1, 2).
+  /// Workflow проверяет FormatVersion и использует только актуальные поля.
+  /// </summary>
   public sealed class FirmwareUpdateFileV2
   {
     /// <summary>
-    /// Версия формата файла
+    /// Версия формата файла: 0 (legacy), 1, 2.
     /// </summary>
     public int FormatVersion { get; private set; }
 
     /// <summary>
-    /// Тип файла обновления
+    /// Тип файла обновления. Для FORMAT=0/1 всегда Single.
     /// </summary>
-    public UpdateFileType UpdateFileType { get; private set; }
+    public UpdateFileType Type { get; private set; }
 
     /// <summary>
-    /// Основной файл прошивки, единственный девайс или Gateway
+    /// Минимальная версия утилиты обновления (MIN_UPDATER=x.y.z).
+    /// Null для FORMAT=0/1.
     /// </summary>
-    public FirmwareData MainFirmwareData { get; private set; }
+    public FirmwareVersion MinUpdaterVersion { get; private set; }
 
     /// <summary>
-    /// Если основной девайс это Gateway, то тут прошивки подчиненных устройств
+    /// Строки #REM из файла обновления, в порядке появления.
+    /// Пустой список для FORMAT=0/1.
     /// </summary>
-    public IReadOnlyList<FirmwareData> SecondaryFirmwareData { get; private set; }
+    public IReadOnlyList<string> Comments { get; private set; }
+
+    /// <summary>
+    /// Прошивка корневого устройства (ROOT или единственное устройство).
+    /// Присутствует всегда.
+    /// </summary>
+    public FirmwareData RootFirmware { get; private set; }
+
+    /// <summary>
+    /// Прошивки слейвов. Пустой список для TYPE=Single.
+    /// </summary>
+    public IReadOnlyList<FirmwareData> SlaveFirmwares { get; private set; }
+
+    // FORMAT=0/1
+    public FirmwareUpdateFileV2(
+      int formatVersion,
+      FirmwareData rootFirmware)
+    {
+      FormatVersion = formatVersion;
+      Type = UpdateFileType.Single;
+      MinUpdaterVersion = null;
+      Comments = new ReadOnlyCollection<string>(new List<string>());
+      RootFirmware = rootFirmware;
+      SlaveFirmwares = new ReadOnlyCollection<FirmwareData>(new List<FirmwareData>());
+    }
+
+    // FORMAT=2 SINGLE
+    public FirmwareUpdateFileV2(
+      FirmwareVersion minUpdaterVersion,
+      IList<string> comments,
+      FirmwareData rootFirmware)
+    {
+      FormatVersion = 2;
+      Type = UpdateFileType.Single;
+      MinUpdaterVersion = minUpdaterVersion;
+      Comments = new ReadOnlyCollection<string>(new List<string>(comments));
+      RootFirmware = rootFirmware;
+      SlaveFirmwares = new ReadOnlyCollection<FirmwareData>(new List<FirmwareData>());
+    }
+
+    // FORMAT=2 COMPLEX
+    public FirmwareUpdateFileV2(
+      FirmwareVersion minUpdaterVersion,
+      IList<string> comments,
+      FirmwareData rootFirmware,
+      IList<FirmwareData> slaveFirmwares)
+    {
+      FormatVersion = 2;
+      Type = UpdateFileType.Complex;
+      MinUpdaterVersion = minUpdaterVersion;
+      Comments = new ReadOnlyCollection<string>(new List<string>(comments));
+      RootFirmware = rootFirmware;
+      SlaveFirmwares = new ReadOnlyCollection<FirmwareData>(new List<FirmwareData>(slaveFirmwares));
+    }
   }
 }

@@ -110,12 +110,16 @@ namespace PolyBootCore
     /// <param name="waitTimeoutSec">Тайм-аут на подключение к обновляемому устройству</param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public BootloaderWorkflowResult Update(FirmwareUpdateFile updateFile)
+    public BootloaderWorkflowResult Update(FirmwareUpdateFileV2 updateFile)
     {
       try
       {
-        if (updateFile.ProtocolVersion == 0)
+        if (updateFile.FormatVersion == 0)
         {
+          /*
+           * Версия формата файла обновления 0.
+           * Для этих файлов всегда используется протокол обновления версии 0
+           */
           var bootloader = new BootloaderProtocolV0(Transport);
 
           bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
@@ -124,8 +128,12 @@ namespace PolyBootCore
 
           return result;
         }
-        else if (updateFile.ProtocolVersion == 1)
+        else if (updateFile.FormatVersion == 1)
         {
+          /*
+           * Версия формата файла обновления 1.
+           * Для этих файлов всегда используется протокол обмена версии 1
+           */
           var bootloader = new BootloaderProtocolV1(Transport);
 
           bootloader.BootloaderMemoryErasureProgress += bootloaderMemoryErasureProgress;
@@ -135,7 +143,7 @@ namespace PolyBootCore
           return result;
         }
         else
-          throw new Exception($"Protocol version {updateFile.ProtocolVersion} is not supported.");
+          throw new Exception($"Protocol version {updateFile.FormatVersion} is not supported.");
       }
       catch (OperationCanceledException)
       {
@@ -148,7 +156,7 @@ namespace PolyBootCore
     }
 
     private BootloaderWorkflowResult UpdateProtocolVersion1(IBootloaderProtocolV1 bootloader,
-      FirmwareUpdateFile updateFile)
+      FirmwareUpdateFileV2 updateFile)
     {
       int connectionIterations = connectionTimeout * 2;
       int i;
@@ -172,7 +180,7 @@ namespace PolyBootCore
 
       EraseBegin?.Invoke();
 
-      result = ExecuteWithReconnectRetry(() => bootloader.BootloaderBegin(updateFile.HeaderChunkBase64.Trim()));
+      result = ExecuteWithReconnectRetry(() => bootloader.BootloaderBegin(updateFile.RootFirmware.HeaderChunkBase64.Trim()));
 
       if (result == PolyBootActionResult.IncompatibleDeviceError)
         return BootloaderWorkflowResult.IncompatibleDeviceError;
@@ -187,7 +195,7 @@ namespace PolyBootCore
 
       UploadBegin?.Invoke();
 
-      var dataChunks = updateFile.DataChunksBase64;
+      var dataChunks = updateFile.RootFirmware.DataChunksBase64;
 
       for (int b = 0; b < dataChunks.Count; b++)
       {
@@ -247,7 +255,7 @@ namespace PolyBootCore
     }
 
     private BootloaderWorkflowResult UpdateProtocolVersion0(IBootloaderProtocolV0 bootloader,
-      FirmwareUpdateFile updateFile)
+      FirmwareUpdateFileV2 updateFile)
     {
       int connectionIterations = connectionTimeout * 2;
       int i;
@@ -283,7 +291,7 @@ namespace PolyBootCore
       if (UploadBegin != null)
         UploadBegin();
 
-      var dataChunks = updateFile.DataChunksBase64;
+      var dataChunks = updateFile.RootFirmware.DataChunksBase64;
 
       for (int b = 0; b < dataChunks.Count; b++)
       {
