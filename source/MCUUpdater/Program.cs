@@ -1,6 +1,6 @@
 ﻿using MCUUpdater.CLI;
-using PolyBootCore;
 using PolyBootCore.UpdateFile.Parser;
+using PolyBootCore.Workflow;
 using System;
 using System.IO;
 using System.Reflection;

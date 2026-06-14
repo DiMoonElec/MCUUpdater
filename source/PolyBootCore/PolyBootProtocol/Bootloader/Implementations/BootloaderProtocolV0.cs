@@ -3,7 +3,7 @@ using System;
 
 namespace PolyBootCore.PolyBootProtocol.Bootloader
 {
-  internal class BootloaderProtocolV0 : BootloaderBase, IBootloaderProtocolV0
+  internal class BootloaderProtocolV0 : BootloaderBase, IBootloaderProtocolLegacy
   {
     const byte CMD_BOOTLOADER_BEGIN = 0x71;
 

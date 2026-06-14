@@ -1,7 +1,7 @@
 ﻿using MCUUpdaterGUI.Settings;
-using PolyBootCore;
 using PolyBootCore.UpdateFile;
 using PolyBootCore.UpdateFile.Parser;
+using PolyBootCore.Workflow;
 using System;
 using System.Drawing;
 using System.Reflection;
@@ -81,7 +81,7 @@ namespace MCUUpdaterGUI
         {
           var result = bootloaderWorkflow.Update(updateFile);
 
-          string description = BootloaderWorkflow.GetDescription(result);
+          string description = BootloaderWorkflowResultExtensions.GetDescription(result);
           switch (result)
           {
             // Error cases

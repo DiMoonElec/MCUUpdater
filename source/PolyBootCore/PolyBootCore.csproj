@@ -45,22 +45,29 @@
     <Compile Include="BinexLib\BinexLibReceiver.cs" />
     <Compile Include="BinexLib\BinexLibTransmitter.cs" />
     <Compile Include="BinexLib\Crc.cs" />
-    <Compile Include="BootloaderWorkflow.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.FormatV2.Complex.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.FormatV2.Single.cs" />
+    <Compile Include="Workflow\ReconnectDecorators\ReconnectBootloaderBase.cs" />
+    <Compile Include="Workflow\ReconnectDecorators\ReconnectBootloaderProtocolLegacy.cs" />
+    <Compile Include="Workflow\ReconnectDecorators\ReconnectBootloaderProtocolV1.cs" />
+    <Compile Include="Workflow\ReconnectDecorators\ReconnectBootloaderProtocolV2.cs" />
+    <Compile Include="Workflow\ReconnectDecorators\ExecuteWithReconnectRetry.cs" />
     <Compile Include="PolyBootProtocol\PolyBootActionResult.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\BootloaderBase.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\BootloaderProtocolV1.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\BootloaderProtocolV2.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\IBootloaderProtocolV1.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\IBootloaderProtocolV2.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Implementations\BootloaderBase.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Implementations\BootloaderProtocolV1.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Implementations\BootloaderProtocolV2.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Interfaces\IBootloaderProtocolV1.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Interfaces\IBootloaderProtocolV2.cs" />
     <Compile Include="Config\ConnectionConfig.cs" />
     <Compile Include="Config\RawTcpConnectionConfig.cs" />
     <Compile Include="Config\SerialConnectionConfig.cs" />
     <Compile Include="MISC\SetOnce.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\BootloaderProtocolV0.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\IBootloaderBase.cs" />
-    <Compile Include="PolyBootProtocol\Bootloader\IBootloaderProtocolV0.cs" />
-    <Compile Include="PolyBootProtocol\Proxy\IProxyProtocolV1.cs" />
-    <Compile Include="PolyBootProtocol\Proxy\ProxyProtocolV1.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Implementations\BootloaderProtocolV0.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Interfaces\IBootloaderBase.cs" />
+    <Compile Include="PolyBootProtocol\Bootloader\Interfaces\IBootloaderProtocolLegacy.cs" />
+    <Compile Include="Workflow\ReconnectDecorators\ReconnectProxyProtocolV1.cs" />
+    <Compile Include="PolyBootProtocol\Proxy\Interfaces\IProxyProtocolV1.cs" />
+    <Compile Include="PolyBootProtocol\Proxy\Implementations\ProxyProtocolV1.cs" />
     <Compile Include="Transport\BootloaderTransport.cs" />
     <Compile Include="Transport\IBootloaderTransportChannel.cs" />
     <Compile Include="Transport\IBootloaderTransportConnection.cs" />
@@ -82,6 +89,15 @@
     <Compile Include="UpdateFile\Parser\ParserV2\Tokenizer.cs" />
     <Compile Include="UpdateFile\Parser\ParserV2\Validator.cs" />
     <Compile Include="UpdateFile\Parser\ParseHelpers.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.FlashDevice.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.FormatLegacy.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.FormatV1.cs" />
+    <Compile Include="Workflow\BootloaderWorkflow.FormatV2.cs" />
+    <Compile Include="Workflow\BootloaderWorkflowTypes.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Workflow\BootloaderWorkflow.Connection.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
