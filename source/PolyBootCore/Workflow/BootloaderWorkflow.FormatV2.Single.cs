@@ -9,8 +9,7 @@ namespace PolyBootCore.Workflow
     {
       var firmware = updateFile.RootFirmware;
 
-      // Выбираем версию протокола по полю BOOTLOADER= из файла
-      if (firmware.BootloaderVersion == 2)
+      if (firmware.BootloaderVersion >= 2)
       {
         BootloaderWorkflowResult result;
 

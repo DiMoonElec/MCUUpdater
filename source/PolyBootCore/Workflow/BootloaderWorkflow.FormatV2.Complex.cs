@@ -58,6 +58,9 @@ namespace PolyBootCore.Workflow
         slaveIdentities, updateFile.SlaveFirmwares,
         forceUpdate);
 
+      if(result != BootloaderWorkflowResult.OK)
+        return result;
+
       // Запускаем основную прошивку мастера
       result = RunApplication(bootloader);
 
@@ -215,12 +218,10 @@ namespace PolyBootCore.Workflow
 
         var slaveResult = UpdateSlave(proxyBootloader, firmware, forceUpdate);
 
-        // Ошибка связи с мастером — выходим немедленно
-        if (slaveResult != BootloaderWorkflowResult.ConnectionLost)
+        if (slaveResult != BootloaderWorkflowResult.OK)
         {
           // ToDo: вывод ошибки в консоль
           // слейв отвалился в процессе, переходим к следующему
-          continue;
         }
       }
 
